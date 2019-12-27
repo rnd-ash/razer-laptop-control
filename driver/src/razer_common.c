@@ -25,7 +25,7 @@ static int fan_rpm = 0;
 static ssize_t get_fan_rpm(struct device *dev, struct device_attribute *attr, char *buf) {
     struct usb_device *usb_dev = interface_to_usbdev(to_usb_interface(dev->parent));
     if (fan_rpm == 0) {
-        return sprintf(buf, "%s", "Automatic\n");
+        return sprintf(buf, "%s", "Automatic (0)\n");
     } else {
         return sprintf(buf, "%d RPM\n", fan_rpm);
     }
@@ -34,9 +34,9 @@ static ssize_t get_fan_rpm(struct device *dev, struct device_attribute *attr, ch
 
 static ssize_t get_performance_mode(struct device *dev, struct device_attribute *attr, char *buf) {
     if (gaming_mode == 0) {
-        return sprintf(buf, "%s", "Balanced\n");
+        return sprintf(buf, "%s", "[Balanced (0)] Gaming (1)\n");
     } else {
-        return sprintf(buf, "%s", "Gaming\n");
+        return sprintf(buf, "%s", "Balanced (0) [Gaming (1)]\n");
     }
 }
 
@@ -120,6 +120,7 @@ static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr, co
         send_payload(dev, buffer);
     } else {
         hid_err(usb_dev, "Requesting AUTO Fan");
+        fan_rpm = 0;
     }
 
     // Fan mode
