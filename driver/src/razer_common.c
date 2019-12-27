@@ -245,9 +245,13 @@ static void razer_laptop_remove(struct hid_device *hdev) {
 }
 
 static const struct hid_device_id table[] = {
+    { HID_USB_DEVICE(0x1532, 0x023b)}, // Blade 2018 (Base)
     { HID_USB_DEVICE(0x1532, 0x0233)}, // Blade 2018 ADV
-    { HID_USB_DEVICE(0x1532, 0x023a)}, // Blade 2019
+    { HID_USB_DEVICE(0x1532, 0x023a)}, // Blade 2019 (Adv)
+    { HID_USB_DEVICE(0x1532, 0x023b)}, // Blade 2019 (Base)
+    { HID_USB_DEVICE(0x1532, 0x022D)}, // Mid 2017 Stealth
     { HID_USB_DEVICE(0x1532, 0x0232)}, // Late 2017 stealth
+    { HID_USB_DEVICE(0x1532, 0x0239)}, // Stealth 2019
     { }
 };
 MODULE_DEVICE_TABLE(hid, table);
