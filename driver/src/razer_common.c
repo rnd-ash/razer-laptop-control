@@ -73,31 +73,16 @@ int send_payload(struct device *dev, void const *buffer) {
 static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
     struct usb_device *usb_dev = interface_to_usbdev(to_usb_interface(dev->parent));
     unsigned long x;
+    __u8 request_fan_speed;
+    char buffer[90];
+    memset(buffer, 0x00, sizeof(buffer));
     if (kstrtol(buf, 10, &x))
         return -EINVAL;
-    if (x == 0) { // Request auto fan! 
-        hid_err(usb_dev, "%s" ,"Requesting AUTO fan");
-        char buffer[90] = {0x00, 0x1f, 0x00, 0x00, 0x00, 0x04, 0x0d, 0x02, 0x00, 0x02, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-        send_payload(dev, buffer);
-        fan_rpm = 0;
-        return count;
-    } else {
-        __u8 request_fan_speed = clampFanRPM(x);
-        hid_err(usb_dev, "Requesting MANUAL fan at %02X %d RPM", request_fan_speed, ((int) request_fan_speed * 100));
+
+    if (x != 0) {
+        request_fan_speed = clampFanRPM(x);
+        hid_err(usb_dev, "Requesting MANUAL fan at %d RPM", ((int) request_fan_speed * 100));
         fan_rpm = request_fan_speed * 100;
-        char buffer[90];
-        memset(buffer, 0x00, sizeof(buffer));
         // All packets
         buffer[0] = 0x00;
         buffer[1] = 0x1f;
@@ -133,17 +118,21 @@ static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr, co
         buffer[10] = 0x00;
         buffer[11] = 0x00;
         send_payload(dev, buffer);
+    } else {
+        hid_err(usb_dev, "Requesting AUTO Fan");
+    }
 
-        // Fan mode
-        buffer[5] = 0x04;
-        buffer[6] = 0x0d;
-        buffer[7] = 0x02;
-        buffer[8] = 0x00;
-        buffer[9] = 0x02;
-        buffer[10] = gaming_mode;
-        buffer[11] = 0x01;
-        send_payload(dev, buffer);
+    // Fan mode
+    buffer[5] = 0x04;
+    buffer[6] = 0x0d;
+    buffer[7] = 0x02;
+    buffer[8] = 0x00;
+    buffer[9] = 0x02;
+    buffer[10] = gaming_mode;
+    buffer[11] = fan_rpm != 0 ? 0x01 : 0x00;
+    send_payload(dev, buffer);
 
+    if (x != 0) {
         // Set fan RPM
         buffer[5] = 0x03;
         buffer[6] = 0x0d;
@@ -153,7 +142,6 @@ static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr, co
         buffer[10] = request_fan_speed;
         buffer[11] = 0x00;
         send_payload(dev, buffer);
-        return count;
     }
     return count;
 }
