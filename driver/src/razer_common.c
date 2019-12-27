@@ -17,18 +17,28 @@ MODULE_VERSION("0.0.1");
 struct razer_laptop {
     struct usb_device *usb_dev;
     struct mutex lock;
-    __u8 fan_rpm;
-    bool is_manual_fan;
-    bool is_gaming_mode;
+    __u8 fan_rpm; // 0 = AUTO, Anything else = RPM
+    __u8 gaming_mode; // 1 = Gaming mode, 0 = Balanced
 };
 
 static ssize_t get_fan_rpm(struct device *dev, struct device_attribute *attr, char *buf) {
-    return "UNknonw";
+    struct usb_device *usb_dev = interface_to_usbdev(to_usb_interface(dev->parent));
+    return sprintf(buf, "%s", "Unknown");
+
+}
+void crc(char * buffer) {
+    int res = 0;
+    int i;
+    for (i = 2; i < 88; i++) {
+        res ^= buffer[i];
+    }
+    buffer[88] = res;
 }
 
+
 int send_payload(struct device *dev, void const *buffer) {
+    crc(buffer);
     struct usb_device *usb_dev = interface_to_usbdev(to_usb_interface(dev->parent));
-    hid_err(usb_dev, "%d", sizeof(buffer));
     char * buf2;
     buf2 = kmemdup(buffer, sizeof(char[90]), GFP_KERNEL);
     hid_err(usb_dev, "Sending payload to Controller\n");
@@ -46,15 +56,6 @@ int send_payload(struct device *dev, void const *buffer) {
     usleep_range(600,800);
     kfree(buf2);
     return 0; // 0 = OK, 1 = Not correct;
-}
-
-void crc(char * buffer) {
-    int res = 0;
-    int i;
-    for (i = 2; i < 88; i++) {
-        res ^= buffer[i];
-    }
-    buffer[88] = res;
 }
 
 static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
@@ -76,41 +77,91 @@ static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr, co
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-        crc(buffer);
         send_payload(dev, buffer);
         return count;
     } else {
         __u8 request_fan_speed = clampFanRPM(x);
         hid_err(usb_dev, "Requesting MANUAL fan at %d RPM", ((int) request_fan_speed * 100));
-        char buffer[90] = {0x00, 0x1f, 0x00, 0x00, 0x00, 0x04, 0x0d, 0x02, 0x00, 0x02, 0x00,
-                    0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-        crc(buffer);
+        char buffer[90];
+        memset(buffer, 0x00, sizeof(buffer));
+        // All packets
+        buffer[0] = 0x00;
+        buffer[1] = 0x1f;
+        buffer[2] = 0x00;
+        buffer[3] = 0x00;
+        buffer[4] = 0x00;
+        // Reset EC
+        buffer[5] = 0x02;
+        buffer[6] = 0x03;
+        buffer[7] = 0x0a;
+        buffer[8] = 0x05;
+        buffer[9] = 0x00;
         send_payload(dev, buffer);
+
+        // Unknown
+        buffer[5] = 0x04;
+        buffer[6] = 0x0d;
+        buffer[7] = 0x82;
+        buffer[8] = 0x00;
+        buffer[9] = 0x01;
+        buffer[10] = 0x00;
+        buffer[11] = 0x00;
+        send_payload(dev, buffer);
+
+        // Set fan RPM
         buffer[5] = 0x03;
+        buffer[6] = 0x0d;
         buffer[7] = 0x01;
         buffer[8] = 0x00;
         buffer[9] = 0x01;
         buffer[10] = request_fan_speed;
         buffer[11] = 0x00;
-        crc(buffer);
+
+        // Unknown
+        buffer[5] = 0x04;
+        buffer[6] = 0x0d;
+        buffer[7] = 0x82;
+        buffer[8] = 0x00;
+        buffer[9] = 0x02;
+        buffer[10] = 0x00;
+        buffer[11] = 0x00;
+        send_payload(dev, buffer);
+
+        // Fan mode
+        buffer[5] = 0x04;
+        buffer[6] = 0x0d;
+        buffer[7] = 0x02;
+        buffer[8] = 0x00;
+        buffer[9] = 0x02;
+        buffer[10] = 0x00;
+        buffer[11] = 0x01;
+        send_payload(dev, buffer);
+
+        // Set fan RPM
+        buffer[5] = 0x03;
+        buffer[6] = 0x0d;
+        buffer[7] = 0x01;
+        buffer[8] = 0x00;
+        buffer[9] = 0x02;
+        buffer[10] = request_fan_speed;
+        buffer[11] = 0x00;
         send_payload(dev, buffer);
         return count;
     }
     return count;
 }
 
+static ssize_t get_performance_mode(struct device *dev, struct device_attribute *attr, char *buf) {
+    return sprintf("%s", "Gaming");
+}
+
+static ssize_t set_performance_mode(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
+    return count;
+}
+
 
 static DEVICE_ATTR(fan_rpm, 0664, get_fan_rpm, set_fan_rpm);
+static DEVICE_ATTR(power_mode, 0664, get_performance_mode, set_performance_mode);
 
 // Called on load module
 static int razer_laptop_probe(struct hid_device *hdev, const struct hid_device_id *id) {
@@ -120,8 +171,6 @@ static int razer_laptop_probe(struct hid_device *hdev, const struct hid_device_i
     struct razer_laptop *dev = NULL;
     dev = kzalloc(sizeof(struct razer_laptop), GFP_KERNEL);
 
-
-
     if (dev == NULL) {
         dev_err(&intf->dev, "Out of memory!\n");
         return -ENOMEM;
@@ -129,13 +178,15 @@ static int razer_laptop_probe(struct hid_device *hdev, const struct hid_device_i
     printk(KERN_DEBUG, "%s", &dev->usb_dev->descriptor);
     mutex_init(&dev->lock);
     dev->usb_dev = usb_dev;
-    
+    dev->fan_rpm = 0;
+    dev->gaming_mode = 0;
     if (intf->cur_altsetting->desc.bInterfaceProtocol != USB_INTERFACE_PROTOCOL_KEYBOARD) {
         hid_err(hdev, "Found mouse - Unloading for device!\n");
         kfree(dev);
         return 0;
     }
     device_create_file(&hdev->dev, &dev_attr_fan_rpm);
+    device_create_file(&hdev->dev, &dev_attr_power_mode);
     // TODO Bind only to System control module. Not keyboard and Consumer control module.
 
     // Currently binding to all these addresses
@@ -164,6 +215,7 @@ static void razer_laptop_remove(struct hid_device *hdev) {
     struct usb_interface *intf = to_usb_interface(hdev->dev.parent);
     dev = hid_get_drvdata(hdev);
     device_remove_file(&hdev->dev, &dev_attr_fan_rpm);
+    device_remove_file(&hdev->dev, &dev_attr_power_mode);
     hid_hw_stop(hdev);
     kfree(dev);
     dev_info(&intf->dev, "Razer_laptop_control: Unloaded on %s\n",&intf->dev.init_name);

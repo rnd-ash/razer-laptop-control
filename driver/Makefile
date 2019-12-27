@@ -16,10 +16,10 @@ all: driver
 driver:
 	@echo "Compiling kernel modules"
 	$(MAKE) -C $(KERNELDIR) M=$(DRIVERDIR) modules
-debug:
-	@echo "Compiling kernel modules (Debug)"
+driver_void:
+	@echo "Compiling kernel modules"
 	$(MAKE) -C $(KERNELDIR) M=$(DRIVERDIR) modules
-	EXTRA_CFLAGS="$(MY_CFLAGS)"
+	EXTRA_CFLAGS="-IWANTTOKILLMYFANS"
 driver_clean:
 	@echo "Cleaning kernel modules"
 	$(MAKE) -C $(KERNELDIR) M=$(DRIVERDIR) clean
