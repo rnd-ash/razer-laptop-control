@@ -17,15 +17,29 @@ MODULE_VERSION("0.0.1");
 struct razer_laptop {
     struct usb_device *usb_dev;
     struct mutex lock;
-    __u8 fan_rpm; // 0 = AUTO, Anything else = RPM
-    __u8 gaming_mode; // 1 = Gaming mode, 0 = Balanced
 };
+
+static int gaming_mode = 0;
+static int fan_rpm = 0;
 
 static ssize_t get_fan_rpm(struct device *dev, struct device_attribute *attr, char *buf) {
     struct usb_device *usb_dev = interface_to_usbdev(to_usb_interface(dev->parent));
-    return sprintf(buf, "%s", "Unknown");
+    if (fan_rpm == 0) {
+        return sprintf(buf, "%s", "Automatic\n");
+    } else {
+        return sprintf(buf, "%d RPM\n", fan_rpm);
+    }
 
 }
+
+static ssize_t get_performance_mode(struct device *dev, struct device_attribute *attr, char *buf) {
+    if (gaming_mode == 0) {
+        return sprintf(buf, "%s", "Balanced\n");
+    } else {
+        return sprintf(buf, "%s", "Gaming\n");
+    }
+}
+
 void crc(char * buffer) {
     int res = 0;
     int i;
@@ -41,7 +55,6 @@ int send_payload(struct device *dev, void const *buffer) {
     struct usb_device *usb_dev = interface_to_usbdev(to_usb_interface(dev->parent));
     char * buf2;
     buf2 = kmemdup(buffer, sizeof(char[90]), GFP_KERNEL);
-    hid_err(usb_dev, "Sending payload to Controller\n");
     int len;
     len = usb_control_msg(usb_dev, usb_sndctrlpipe(usb_dev, 0),
         0x09,
@@ -52,7 +65,6 @@ int send_payload(struct device *dev, void const *buffer) {
         90,
         USB_CTRL_SET_TIMEOUT
     );
-    hid_err(usb_dev, "Sent to Controller!\n");
     usleep_range(600,800);
     kfree(buf2);
     return 0; // 0 = OK, 1 = Not correct;
@@ -78,10 +90,12 @@ static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr, co
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
         send_payload(dev, buffer);
+        fan_rpm = 0;
         return count;
     } else {
         __u8 request_fan_speed = clampFanRPM(x);
-        hid_err(usb_dev, "Requesting MANUAL fan at %d RPM", ((int) request_fan_speed * 100));
+        hid_err(usb_dev, "Requesting MANUAL fan at %02X %d RPM", request_fan_speed, ((int) request_fan_speed * 100));
+        fan_rpm = request_fan_speed * 100;
         char buffer[90];
         memset(buffer, 0x00, sizeof(buffer));
         // All packets
@@ -90,13 +104,6 @@ static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr, co
         buffer[2] = 0x00;
         buffer[3] = 0x00;
         buffer[4] = 0x00;
-        // Reset EC
-        buffer[5] = 0x02;
-        buffer[6] = 0x03;
-        buffer[7] = 0x0a;
-        buffer[8] = 0x05;
-        buffer[9] = 0x00;
-        send_payload(dev, buffer);
 
         // Unknown
         buffer[5] = 0x04;
@@ -133,7 +140,7 @@ static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr, co
         buffer[7] = 0x02;
         buffer[8] = 0x00;
         buffer[9] = 0x02;
-        buffer[10] = 0x00;
+        buffer[10] = gaming_mode;
         buffer[11] = 0x01;
         send_payload(dev, buffer);
 
@@ -151,11 +158,38 @@ static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr, co
     return count;
 }
 
-static ssize_t get_performance_mode(struct device *dev, struct device_attribute *attr, char *buf) {
-    return sprintf("%s", "Gaming");
-}
-
 static ssize_t set_performance_mode(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
+    struct usb_device *usb_dev = interface_to_usbdev(to_usb_interface(dev->parent));
+    unsigned long x;
+    if (kstrtol(buf, 10, &x))
+        return -EINVAL;
+    if (x == 1 || x == 0){
+        gaming_mode = x;
+        if (x == 1)
+            hid_err(usb_dev,"%s", "Requesting Gaming performance");
+        else if (x == 0)
+            hid_err(usb_dev,"%s", "Requesting Balanced performance");
+        char buffer[90];
+        memset(buffer, 0x00, sizeof(buffer));
+        // All packets
+        buffer[0] = 0x00;
+        buffer[1] = 0x1f;
+        buffer[2] = 0x00;
+        buffer[3] = 0x00;
+        buffer[4] = 0x00;
+
+        buffer[5] = 0x04;
+        buffer[6] = 0x0d;
+        buffer[7] = 0x02;
+        buffer[8] = 0x00;
+        buffer[9] = 0x02;
+        buffer[10] = gaming_mode;
+        buffer[11] = fan_rpm != 0 ? 0x01 : 0x00;
+        send_payload(dev, buffer);
+        return count;
+    } else {
+        return -EINVAL;
+    }
     return count;
 }
 
@@ -178,8 +212,8 @@ static int razer_laptop_probe(struct hid_device *hdev, const struct hid_device_i
     printk(KERN_DEBUG, "%s", &dev->usb_dev->descriptor);
     mutex_init(&dev->lock);
     dev->usb_dev = usb_dev;
-    dev->fan_rpm = 0;
-    dev->gaming_mode = 0;
+    fan_rpm = 0;
+    gaming_mode = 0;
     if (intf->cur_altsetting->desc.bInterfaceProtocol != USB_INTERFACE_PROTOCOL_KEYBOARD) {
         hid_err(hdev, "Found mouse - Unloading for device!\n");
         kfree(dev);
