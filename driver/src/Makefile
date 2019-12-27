@@ -1,1 +1,3 @@
-obj-m += razer_sys_control.o
+obj-m := razercontrol.o
+
+razercontrol-y := razer_common.o fancontrol.o
