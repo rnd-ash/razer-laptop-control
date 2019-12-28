@@ -26,3 +26,10 @@ int get_max_fan_rpm(__u32 product_id);
  */
 __u8 clampFanRPM(unsigned int rpm, __u32 product_id);
 
+
+/**
+ * Some laptops are allowed an additional mode called 'creator'
+ * which raises just GPU power
+ */
+int creatorModeAllowed(__u32 product_id);
+

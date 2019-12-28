@@ -78,8 +78,10 @@ static ssize_t get_performance_mode(struct device *dev, struct device_attribute 
     struct razer_laptop *laptop = dev_get_drvdata(dev);
     if (laptop->gaming_mode == 0) {
         return sprintf(buf, "%s", "Balanced (0)\n");
+    } else if (laptop->gaming_mode == 1){
+        return sprintf(buf, "%s", "Gaming (1)\n");
     } else {
-        return sprintf(buf, "%s", "Gaming(1)\n");
+        return sprintf(buf, "%s", "Creator (2)\n");
     }
 }
 
@@ -231,12 +233,18 @@ static ssize_t set_performance_mode(struct device *dev, struct device_attribute 
         dev_warn(dev, "User entered an invalid input for power mode. Defaulting to balanced");
         x = 0;
     }
-    if (x == 1 || x == 0){
-        laptop->gaming_mode = x;
-        if (x == 1)
-            dev_info(dev,"%s", "Enabling Gaming power mode");
-        else if (x == 0)
+    if (x == 1 || x == 0 || x == 2){
+        if (x == 0) {
             dev_info(dev,"%s", "Enabling Balanced power mode");
+        } else if (x == 2 && creatorModeAllowed(laptop->product_id) == 1) {
+            dev_info(dev,"%s", "Enabling Gaming power mode");
+        } else if (x == 1) {
+            dev_info(dev,"%s", "Enabling Gaming power mode");
+        } else {
+            x = 1;
+            dev_warn(dev,"%s", "Creator mode not allowed, falling back to performance");
+        }
+        laptop->gaming_mode = x;
         char buffer[90];
         memset(buffer, 0x00, sizeof(buffer));
         // All packets
@@ -250,7 +258,7 @@ static ssize_t set_performance_mode(struct device *dev, struct device_attribute 
         buffer[6] = 0x0d;
         buffer[7] = 0x02;
         buffer[8] = 0x00;
-        buffer[9] = 0x02;
+        buffer[9] = 0x01;
         buffer[10] = laptop->gaming_mode;
         buffer[11] = laptop->fan_rpm != 0 ? 0x01 : 0x00;
         send_payload(laptop->usb_dev, buffer,0,0);
@@ -269,7 +277,6 @@ static DEVICE_ATTR(power_mode, 0664, get_performance_mode, set_performance_mode)
 static int razer_laptop_probe(struct hid_device *hdev, const struct hid_device_id *id) {
     struct usb_interface *intf = to_usb_interface(hdev->dev.parent);
     struct usb_device *usb_dev = interface_to_usbdev(intf);
-    dev_info(&intf->dev, "razer_laptop_control: Supported device found!\n");
     struct razer_laptop *dev = NULL;
     dev = kzalloc(sizeof(struct razer_laptop), GFP_KERNEL);
 
@@ -277,7 +284,6 @@ static int razer_laptop_probe(struct hid_device *hdev, const struct hid_device_i
         dev_err(&intf->dev, "Out of memory!\n");
         return -ENOMEM;
     }
-    printk(KERN_DEBUG, "%s", &dev->usb_dev->descriptor);
     mutex_init(&dev->lock);
     dev->usb_dev = usb_dev;
     dev->fan_rpm = 0;
@@ -289,7 +295,7 @@ static int razer_laptop_probe(struct hid_device *hdev, const struct hid_device_i
         kfree(dev);
         return 0;
     }
-    dev_info(&intf->dev, "Found supported device: %s", getDeviceDescription(dev->product_id));
+    dev_info(&intf->dev, "Found supported device: %s\n", getDeviceDescription(dev->product_id));
     device_create_file(&hdev->dev, &dev_attr_fan_rpm);
     device_create_file(&hdev->dev, &dev_attr_power_mode);
     
@@ -318,7 +324,7 @@ static void razer_laptop_remove(struct hid_device *hdev) {
     device_remove_file(&hdev->dev, &dev_attr_power_mode);
     hid_hw_stop(hdev);
     kfree(dev);
-    dev_info(&intf->dev, "Razer_laptop_control: Unloaded on %s\n",&intf->dev.init_name);
+    dev_info(&intf->dev, "Razer_laptop_control: Unloaded\n");
 }
 
 // Support list for module

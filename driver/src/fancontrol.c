@@ -24,3 +24,14 @@ __u8 clampFanRPM(unsigned int rpm, __u32 product_id) {
     }
     return (__u8) (rpm / 100);
 }
+
+int creatorModeAllowed(__u32 product_id) {
+     switch (product_id)
+    {
+        case BLADE_2019_ADV:
+        case BLADE_2019_MERC:
+            return 1;
+        default:
+            return 0;
+    }
+}
