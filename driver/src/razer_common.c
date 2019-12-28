@@ -11,6 +11,44 @@ MODULE_DESCRIPTION("Razer system control driver for laptops");
 MODULE_LICENSE("GPL");
 MODULE_VERSION("0.0.1");
 
+/**
+ * Returns a pointer to string of the product name of the device
+ */
+char * getDeviceDescription(int product_id) {
+    switch(product_id) {
+        case BLADE_2016_END:
+            return "Blade 15 late 2016";
+        case BLADE_2018_BASE:
+            return "Blade 15 2018 Base";
+        case BLADE_2018_ADV:
+            return "Blade 15 2018 Advanced";
+        case BLADE_2018_MERC:
+            return "Blade 15 2018 Mercury Edition";
+        case BLADE_2018_PRO_FHD:
+            return "Blade pro 2018 FHD";
+        case BLADE_2019_ADV:
+            return "Blade 15 2019 Advanced";
+        case BLADE_2019_MERC:
+            return "Blade 15 2019 Mercury Edition";
+        case BLADE_2019_STEALTH:
+            return "Blade 2019 Stealth";
+        case BLADE_PRO_2019:
+            return "Blade pro 2019";
+        case BLADE_2016_PRO:
+            return "Blade pro 2016";
+        case BLADE_2017_PRO:
+            return "Blade peo 2017";
+        case BLADE_2017_STEALTH_END:
+            return "Blade Stealth late 2017";
+        case BLADE_2017_STEALTH_MID:
+            return "Blade Stealth mid 2017";
+        case BLADE_QHD:
+            return "Blade QHD";
+        default:
+            return "UNKNOWN";
+    }
+}
+
 // Struct to hold some basic data about the laptops current state
 struct razer_laptop {
     int product_id; // Product ID
@@ -93,10 +131,10 @@ static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr, co
     __u8 request_fan_speed;
     char buffer[90];
     memset(buffer, 0x00, sizeof(buffer));
-    if (kstrtol(buf, 10, &x)) // Convert users input to integer
+    if (kstrtol(buf, 10, &x)) { // Convert users input to integer
         dev_warn(dev, "User entered an invalid input for fan rpm. Defaulting to auto");
         request_fan_speed = 0;
-
+    }
     if (x != 0) {
         request_fan_speed = clampFanRPM(x, laptop->product_id);
         dev_info(dev, "Requesting MANUAL fan at %d RPM", ((int) request_fan_speed * 100));
@@ -189,9 +227,10 @@ static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr, co
 static ssize_t set_performance_mode(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
     struct razer_laptop *laptop = dev_get_drvdata(dev);
     unsigned long x;
-    if (kstrtol(buf, 10, &x))
+    if (kstrtol(buf, 10, &x)) {
         dev_warn(dev, "User entered an invalid input for power mode. Defaulting to balanced");
         x = 0;
+    }
     if (x == 1 || x == 0){
         laptop->gaming_mode = x;
         if (x == 1)
@@ -250,6 +289,7 @@ static int razer_laptop_probe(struct hid_device *hdev, const struct hid_device_i
         kfree(dev);
         return 0;
     }
+    dev_info(&intf->dev, "Found supported device: %s", getDeviceDescription(dev->product_id));
     device_create_file(&hdev->dev, &dev_attr_fan_rpm);
     device_create_file(&hdev->dev, &dev_attr_power_mode);
     
@@ -289,7 +329,7 @@ static const struct hid_device_id table[] = {
     { HID_USB_DEVICE(RAZER_VENDOR_ID, BLADE_2018_BASE)},
     { HID_USB_DEVICE(RAZER_VENDOR_ID, BLADE_2018_MERC)},
     { HID_USB_DEVICE(RAZER_VENDOR_ID, BLADE_2019_ADV)},
-    { HID_USB_DEVICE(RAZER_VENDOR_ID, BLADE_2019_BASE)},
+    { HID_USB_DEVICE(RAZER_VENDOR_ID, BLADE_PRO_2019)},
     { HID_USB_DEVICE(RAZER_VENDOR_ID, BLADE_2019_MERC)},
 
     // Stealths
