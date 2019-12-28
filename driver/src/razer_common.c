@@ -50,7 +50,7 @@ void crc(char * buffer) {
 }
 
 
-int send_payload(struct device *dev, void const *buffer) {
+int send_payload(struct device *dev, void const *buffer, unsigned long minWait, unsigned long maxWait) {
     crc(buffer);
     struct usb_device *usb_dev = interface_to_usbdev(to_usb_interface(dev->parent));
     char * buf2;
@@ -65,7 +65,7 @@ int send_payload(struct device *dev, void const *buffer) {
         90,
         USB_CTRL_SET_TIMEOUT
     );
-    usleep_range(600,800);
+    usleep_range(minWait,maxWait);
     kfree(buf2);
     return 0; // 0 = OK, 1 = Not correct;
 }
@@ -98,7 +98,17 @@ static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr, co
         buffer[9] = 0x01;
         buffer[10] = 0x00;
         buffer[11] = 0x00;
-        send_payload(dev, buffer);
+        send_payload(dev, buffer,3400,3800);
+
+        // Unknown
+        buffer[5] = 0x04;
+        buffer[6] = 0x0d;
+        buffer[7] = 0x02;
+        buffer[8] = 0x00;
+        buffer[9] = 0x01;
+        buffer[10] = gaming_mode;
+        buffer[11] = fan_rpm != 0 ? 0x01 : 0x00;
+        send_payload(dev, buffer,204000,205000);
 
         // Set fan RPM
         buffer[5] = 0x03;
@@ -108,6 +118,7 @@ static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr, co
         buffer[9] = 0x01;
         buffer[10] = request_fan_speed;
         buffer[11] = 0x00;
+        send_payload(dev, buffer,3400,3800);
 
         // Unknown
         buffer[5] = 0x04;
@@ -117,7 +128,7 @@ static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr, co
         buffer[9] = 0x02;
         buffer[10] = 0x00;
         buffer[11] = 0x00;
-        send_payload(dev, buffer);
+        send_payload(dev, buffer,3400, 3800);
     } else {
         hid_err(usb_dev, "Requesting AUTO Fan");
         fan_rpm = 0;
@@ -131,7 +142,7 @@ static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr, co
     buffer[9] = 0x02;
     buffer[10] = gaming_mode;
     buffer[11] = fan_rpm != 0 ? 0x01 : 0x00;
-    send_payload(dev, buffer);
+    send_payload(dev, buffer,204000,205000);
 
     if (x != 0) {
         // Set fan RPM
@@ -142,7 +153,7 @@ static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr, co
         buffer[9] = 0x02;
         buffer[10] = request_fan_speed;
         buffer[11] = 0x00;
-        send_payload(dev, buffer);
+        send_payload(dev, buffer,0,0);
     }
     return count;
 }
@@ -174,7 +185,7 @@ static ssize_t set_performance_mode(struct device *dev, struct device_attribute 
         buffer[9] = 0x02;
         buffer[10] = gaming_mode;
         buffer[11] = fan_rpm != 0 ? 0x01 : 0x00;
-        send_payload(dev, buffer);
+        send_payload(dev, buffer,0,0);
         return count;
     } else {
         return -EINVAL;
