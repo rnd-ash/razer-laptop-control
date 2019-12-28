@@ -24,7 +24,7 @@ insmod razercontrol.ko
 ## OK Driver installed, how do I use this?
 1. CD to the following directry:
 ```
-cd "/sys/module/razercontrol/drivers/hid\:Razer\ System\ control\ driver"
+cd "/sys/module/razercontrol/drivers/hid:Razer laptop System control driver"
 ```
 2. From here, ls shows that there are a couple devices to choose from:
 ```
