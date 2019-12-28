@@ -67,11 +67,18 @@ Echo 0 to this file for balanced mode and 1 for gaming mode (increase GPU/CPU TD
 ```
 [root@RB-2018 0003:1532:0233.0005]# echo 0 > power_mode
 [root@RB-2018 0003:1532:0233.0005]# cat power_mode 
-[Balanced (0)] Gaming (1)
+Balanced (0)
 
 [root@RB-2018 0003:1532:0233.0005]# echo 1 > power_mode
 [root@RB-2018 0003:1532:0233.0005]# cat power_mode
-Balanced (0) [Gaming (1)]
+Gaming (1)
+```
+
+On some laptops, there is also another mode called creator mode. This ramps up CPU power instead of GPU power, this can be enabled as shown:
+```
+[root@RB-2018 0003:1532:0233.0005]# echo 2 > power_mode
+[root@RB-2018 0003:1532:0233.0005]# cat power_mode
+Creator (2)
 ```
 
 NOTE: Turning on gaming mode can automatically make the fan increase in speed as the EC seems to switch to a more aggressive fan curve if still in automatic mode.
