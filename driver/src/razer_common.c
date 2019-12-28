@@ -4,7 +4,7 @@
 #include <linux/init.h>
 #include <linux/module.h>
 #include "fancontrol.h"
-
+#include "defines.h"
 
 MODULE_AUTHOR("Ashcon Mohseninia");
 MODULE_DESCRIPTION("Razer system control driver for laptops");
@@ -15,28 +15,29 @@ MODULE_VERSION("0.0.1");
 #define CONS_CONSTROL_ID 3 // Consumer control
 
 struct razer_laptop {
+    int product_id;
     struct usb_device *usb_dev;
     struct mutex lock;
+    int fan_rpm;
+    int gaming_mode;
 };
 
-static int gaming_mode = 0;
-static int fan_rpm = 0;
-
 static ssize_t get_fan_rpm(struct device *dev, struct device_attribute *attr, char *buf) {
-    struct usb_device *usb_dev = interface_to_usbdev(to_usb_interface(dev->parent));
-    if (fan_rpm == 0) {
+   struct razer_laptop *laptop = dev_get_drvdata(dev);
+    if (laptop->fan_rpm == 0) {
         return sprintf(buf, "%s", "Automatic (0)\n");
     } else {
-        return sprintf(buf, "%d RPM\n", fan_rpm);
+        return sprintf(buf, "%d RPM\n", laptop->fan_rpm);
     }
 
 }
 
 static ssize_t get_performance_mode(struct device *dev, struct device_attribute *attr, char *buf) {
-    if (gaming_mode == 0) {
-        return sprintf(buf, "%s", "[Balanced (0)] Gaming (1)\n");
+    struct razer_laptop *laptop = dev_get_drvdata(dev);
+    if (laptop->gaming_mode == 0) {
+        return sprintf(buf, "%s", "Balanced (0)\n");
     } else {
-        return sprintf(buf, "%s", "Balanced (0) [Gaming (1)]\n");
+        return sprintf(buf, "%s", "Gaming(1)\n");
     }
 }
 
@@ -50,9 +51,8 @@ void crc(char * buffer) {
 }
 
 
-int send_payload(struct device *dev, void const *buffer, unsigned long minWait, unsigned long maxWait) {
+int send_payload(struct usb_device *usb_dev, void const *buffer, unsigned long minWait, unsigned long maxWait) {
     crc(buffer);
-    struct usb_device *usb_dev = interface_to_usbdev(to_usb_interface(dev->parent));
     char * buf2;
     buf2 = kmemdup(buffer, sizeof(char[90]), GFP_KERNEL);
     int len;
@@ -71,7 +71,7 @@ int send_payload(struct device *dev, void const *buffer, unsigned long minWait, 
 }
 
 static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
-    struct usb_device *usb_dev = interface_to_usbdev(to_usb_interface(dev->parent));
+    struct razer_laptop *laptop = dev_get_drvdata(dev);
     unsigned long x;
     __u8 request_fan_speed;
     char buffer[90];
@@ -80,9 +80,9 @@ static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr, co
         return -EINVAL;
 
     if (x != 0) {
-        request_fan_speed = clampFanRPM(x);
-        hid_err(usb_dev, "Requesting MANUAL fan at %d RPM", ((int) request_fan_speed * 100));
-        fan_rpm = request_fan_speed * 100;
+        request_fan_speed = clampFanRPM(x, laptop->product_id);
+        hid_err(laptop->usb_dev, "Requesting MANUAL fan at %d RPM", ((int) request_fan_speed * 100));
+        laptop->fan_rpm = request_fan_speed * 100;
         // All packets
         buffer[0] = 0x00;
         buffer[1] = 0x1f;
@@ -98,7 +98,7 @@ static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr, co
         buffer[9] = 0x01;
         buffer[10] = 0x00;
         buffer[11] = 0x00;
-        send_payload(dev, buffer,3400,3800);
+        send_payload(laptop->usb_dev, buffer,3400,3800);
 
         // Unknown
         buffer[5] = 0x04;
@@ -106,9 +106,9 @@ static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr, co
         buffer[7] = 0x02;
         buffer[8] = 0x00;
         buffer[9] = 0x01;
-        buffer[10] = gaming_mode;
-        buffer[11] = fan_rpm != 0 ? 0x01 : 0x00;
-        send_payload(dev, buffer,204000,205000);
+        buffer[10] = laptop->gaming_mode;
+        buffer[11] = laptop->fan_rpm != 0 ? 0x01 : 0x00;
+        send_payload(laptop->usb_dev, buffer,204000,205000);
 
         // Set fan RPM
         buffer[5] = 0x03;
@@ -118,7 +118,7 @@ static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr, co
         buffer[9] = 0x01;
         buffer[10] = request_fan_speed;
         buffer[11] = 0x00;
-        send_payload(dev, buffer,3400,3800);
+        send_payload(laptop->usb_dev, buffer,3400,3800);
 
         // Unknown
         buffer[5] = 0x04;
@@ -128,10 +128,10 @@ static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr, co
         buffer[9] = 0x02;
         buffer[10] = 0x00;
         buffer[11] = 0x00;
-        send_payload(dev, buffer,3400, 3800);
+        send_payload(laptop->usb_dev, buffer,3400, 3800);
     } else {
-        hid_err(usb_dev, "Requesting AUTO Fan");
-        fan_rpm = 0;
+        hid_err(laptop->usb_dev, "Requesting AUTO Fan");
+        laptop->fan_rpm = 0;
     }
 
     // Fan mode
@@ -140,9 +140,9 @@ static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr, co
     buffer[7] = 0x02;
     buffer[8] = 0x00;
     buffer[9] = 0x02;
-    buffer[10] = gaming_mode;
-    buffer[11] = fan_rpm != 0 ? 0x01 : 0x00;
-    send_payload(dev, buffer,204000,205000);
+    buffer[10] = laptop->gaming_mode;
+    buffer[11] = laptop->fan_rpm != 0 ? 0x01 : 0x00;
+    send_payload(laptop->usb_dev, buffer,204000,205000);
 
     if (x != 0) {
         // Set fan RPM
@@ -153,22 +153,22 @@ static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr, co
         buffer[9] = 0x02;
         buffer[10] = request_fan_speed;
         buffer[11] = 0x00;
-        send_payload(dev, buffer,0,0);
+        send_payload(laptop->usb_dev, buffer,0,0);
     }
     return count;
 }
 
 static ssize_t set_performance_mode(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
-    struct usb_device *usb_dev = interface_to_usbdev(to_usb_interface(dev->parent));
+    struct razer_laptop *laptop = dev_get_drvdata(dev);
     unsigned long x;
     if (kstrtol(buf, 10, &x))
         return -EINVAL;
     if (x == 1 || x == 0){
-        gaming_mode = x;
+        laptop->gaming_mode = x;
         if (x == 1)
-            hid_err(usb_dev,"%s", "Requesting Gaming performance");
+            hid_err(laptop->usb_dev,"%s", "Requesting Gaming performance");
         else if (x == 0)
-            hid_err(usb_dev,"%s", "Requesting Balanced performance");
+            hid_err(laptop->usb_dev,"%s", "Requesting Balanced performance");
         char buffer[90];
         memset(buffer, 0x00, sizeof(buffer));
         // All packets
@@ -183,9 +183,9 @@ static ssize_t set_performance_mode(struct device *dev, struct device_attribute 
         buffer[7] = 0x02;
         buffer[8] = 0x00;
         buffer[9] = 0x02;
-        buffer[10] = gaming_mode;
-        buffer[11] = fan_rpm != 0 ? 0x01 : 0x00;
-        send_payload(dev, buffer,0,0);
+        buffer[10] = laptop->gaming_mode;
+        buffer[11] = laptop->fan_rpm != 0 ? 0x01 : 0x00;
+        send_payload(laptop->usb_dev, buffer,0,0);
         return count;
     } else {
         return -EINVAL;
@@ -193,7 +193,7 @@ static ssize_t set_performance_mode(struct device *dev, struct device_attribute 
     return count;
 }
 
-
+// Set our device attributes in sysfs
 static DEVICE_ATTR(fan_rpm, 0664, get_fan_rpm, set_fan_rpm);
 static DEVICE_ATTR(power_mode, 0664, get_performance_mode, set_performance_mode);
 
@@ -212,8 +212,9 @@ static int razer_laptop_probe(struct hid_device *hdev, const struct hid_device_i
     printk(KERN_DEBUG, "%s", &dev->usb_dev->descriptor);
     mutex_init(&dev->lock);
     dev->usb_dev = usb_dev;
-    fan_rpm = 0;
-    gaming_mode = 0;
+    dev->fan_rpm = 0;
+    dev->gaming_mode = 0;
+    dev->product_id = hdev->product;
     if (intf->cur_altsetting->desc.bInterfaceProtocol != USB_INTERFACE_PROTOCOL_KEYBOARD) {
         hid_err(hdev, "Found mouse - Unloading for device!\n");
         kfree(dev);
@@ -221,12 +222,7 @@ static int razer_laptop_probe(struct hid_device *hdev, const struct hid_device_i
     }
     device_create_file(&hdev->dev, &dev_attr_fan_rpm);
     device_create_file(&hdev->dev, &dev_attr_power_mode);
-    // TODO Bind only to System control module. Not keyboard and Consumer control module.
-
-    // Currently binding to all these addresses
-    // input: Razer Razer Blade Keyboard as /devices/pci0000:00/0000:00:14.0/usb1/1-8/1-8:1.1/0003:1532:0233.0006/input/input188
-    // input: Razer Razer Blade Consumer Control as /devices/pci0000:00/0000:00:14.0/usb1/1-8/1-8:1.1/0003:1532:0233.0006/input/input189
-    // input: Razer Razer Blade System Control as /devices/pci0000:00/0000:00:14.0/usb1/1-8/1-8:1.1/0003:1532:0233.0006/input/input190
+    
     hid_set_drvdata(hdev, dev);
     if(hid_parse(hdev)) {
         hid_err(hdev, "Failed to parse device!\n");
@@ -256,18 +252,18 @@ static void razer_laptop_remove(struct hid_device *hdev) {
 }
 
 static const struct hid_device_id table[] = {
-    { HID_USB_DEVICE(0x1532, 0x023b)}, // Blade 2018 (Base)
-    { HID_USB_DEVICE(0x1532, 0x0233)}, // Blade 2018 ADV
-    { HID_USB_DEVICE(0x1532, 0x023a)}, // Blade 2019 (Adv)
-    { HID_USB_DEVICE(0x1532, 0x023b)}, // Blade 2019 (Base)
-    { HID_USB_DEVICE(0x1532, 0x022D)}, // Mid 2017 Stealth
-    { HID_USB_DEVICE(0x1532, 0x0232)}, // Late 2017 stealth
-    { HID_USB_DEVICE(0x1532, 0x0239)}, // Stealth 2019
+    { HID_USB_DEVICE(RAZER_VENDOR_ID, BLADE_2018_ADV)},
+    { HID_USB_DEVICE(RAZER_VENDOR_ID, BLADE_2018_BASE)},
+    { HID_USB_DEVICE(RAZER_VENDOR_ID, BLADE_2019_ADV)},
+    { HID_USB_DEVICE(RAZER_VENDOR_ID, BLADE_2019_BASE)},
+    { HID_USB_DEVICE(RAZER_VENDOR_ID, BLADE_2017_STEALTH_MID)},
+    { HID_USB_DEVICE(RAZER_VENDOR_ID, BLADE_2017_STEALTH_END)},
+    { HID_USB_DEVICE(RAZER_VENDOR_ID, BLADE_2019_STEALTH)},
     { }
 };
 MODULE_DEVICE_TABLE(hid, table);
 static struct hid_driver razer_sc_driver = {
-    .name = "Razer System control driver",
+    .name = "Razer laptop System control driver",
     .probe = razer_laptop_probe,
     .remove = razer_laptop_remove,
     .id_table = table,
