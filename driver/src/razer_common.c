@@ -65,11 +65,10 @@ struct razer_laptop {
 static ssize_t get_fan_rpm(struct device *dev, struct device_attribute *attr, char *buf)
 {
 	struct razer_laptop *laptop = dev_get_drvdata(dev);
-	if (laptop->fan_rpm == 0) {
+	if (laptop->fan_rpm == 0)
 		return sprintf(buf, "%s", "Automatic (0)\n");
-	} else {
-		return sprintf(buf, "%d RPM\n", laptop->fan_rpm);
-	}
+
+	return sprintf(buf, "%d RPM\n", laptop->fan_rpm);
 }
 
 /**
@@ -78,13 +77,12 @@ static ssize_t get_fan_rpm(struct device *dev, struct device_attribute *attr, ch
 static ssize_t get_performance_mode(struct device *dev, struct device_attribute *attr, char *buf)
 {
 	struct razer_laptop *laptop = dev_get_drvdata(dev);
-	if (laptop->gaming_mode == 0) {
+	if (laptop->gaming_mode == 0)
 		return sprintf(buf, "%s", "Balanced (0)\n");
-	} else if (laptop->gaming_mode == 1){
+	else if (laptop->gaming_mode == 1)
 		return sprintf(buf, "%s", "Gaming (1)\n");
-	} else {
-		return sprintf(buf, "%s", "Creator (2)\n");
-	}
+
+	return sprintf(buf, "%s", "Creator (2)\n");
 }
 
 /**
@@ -96,9 +94,9 @@ void crc(char * buffer)
 	int res = 0;
 	int i;
 	// Simple CRC. Iterate over all bits from 2-87 and XOR them together
-	for (i = 2; i < 88; i++) {
+	for (i = 2; i < 88; i++)
 		res ^= buffer[i];
-	}
+
 	buffer[88] = res; // Set the checksum bit
 }
 
