@@ -107,11 +107,12 @@ void crc(char * buffer) {
  * @param minWait Minimum time to wait in us after sending the payload
  * @param maxWait Maximum time to wait in us after sending the payload
  */
-int send_payload(struct usb_device *usb_dev, void const *buffer, unsigned long minWait, unsigned long maxWait) {
-    crc(buffer); // Generate checksum for payload
+int send_payload(struct usb_device *usb_dev, char *buffer, unsigned long minWait, unsigned long maxWait) {
     char * buf2;
-    buf2 = kmemdup(buffer, sizeof(char[90]), GFP_KERNEL);
     int len;
+
+    crc(buffer); // Generate checksum for payload
+    buf2 = kmemdup(buffer, sizeof(char[90]), GFP_KERNEL);
     len = usb_control_msg(usb_dev, usb_sndctrlpipe(usb_dev, 0),
         0x09,
         0x21,
@@ -234,6 +235,8 @@ static ssize_t set_performance_mode(struct device *dev, struct device_attribute 
         x = 0;
     }
     if (x == 1 || x == 0 || x == 2){
+        char buffer[90];
+
         if (x == 0) {
             dev_info(dev,"%s", "Enabling Balanced power mode");
         } else if (x == 2 && creatorModeAllowed(laptop->product_id) == 1) {
@@ -245,7 +248,6 @@ static ssize_t set_performance_mode(struct device *dev, struct device_attribute 
             dev_warn(dev,"%s", "Creator mode not allowed, falling back to performance");
         }
         laptop->gaming_mode = x;
-        char buffer[90];
         memset(buffer, 0x00, sizeof(buffer));
         // All packets
         buffer[0] = 0x00;
@@ -311,7 +313,7 @@ static int razer_laptop_probe(struct hid_device *hdev, const struct hid_device_i
         return 1;
     }
 
-    printk(KERN_INFO, "Razer_laptop_control: Loaded\n");
+    printk(KERN_INFO "Razer_laptop_control: Loaded\n");
     return 0;
 }
 
