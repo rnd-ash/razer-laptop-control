@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0
 #include "fancontrol.h"
 
 int get_max_fan_rpm(__u32 product_id)
