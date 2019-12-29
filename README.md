@@ -18,7 +18,7 @@ sudo rmmod razerkbd
 cd driver
 make
 cd src
-insmod razercontrol.ko
+sudo insmod razercontrol.ko
 ```
 
 ## OK Driver installed, how do I use this?
