@@ -65,6 +65,7 @@ struct razer_laptop {
 static ssize_t get_fan_rpm(struct device *dev, struct device_attribute *attr, char *buf)
 {
 	struct razer_laptop *laptop = dev_get_drvdata(dev);
+
 	if (laptop->fan_rpm == 0)
 		return sprintf(buf, "%s", "Automatic (0)\n");
 
@@ -77,6 +78,7 @@ static ssize_t get_fan_rpm(struct device *dev, struct device_attribute *attr, ch
 static ssize_t get_performance_mode(struct device *dev, struct device_attribute *attr, char *buf)
 {
 	struct razer_laptop *laptop = dev_get_drvdata(dev);
+
 	if (laptop->gaming_mode == 0)
 		return sprintf(buf, "%s", "Balanced (0)\n");
 	else if (laptop->gaming_mode == 1)
@@ -135,6 +137,7 @@ static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr, co
 	unsigned long x;
 	__u8 request_fan_speed;
 	char buffer[90];
+
 	memset(buffer, 0x00, sizeof(buffer));
 	if (kstrtol(buf, 10, &x)) { // Convert users input to integer
 		dev_warn(dev, "User entered an invalid input for fan rpm. Defaulting to auto");
@@ -233,6 +236,7 @@ static ssize_t set_performance_mode(struct device *dev, struct device_attribute 
 {
 	struct razer_laptop *laptop = dev_get_drvdata(dev);
 	unsigned long x;
+
 	if (kstrtol(buf, 10, &x)) {
 		dev_warn(dev, "User entered an invalid input for power mode. Defaulting to balanced");
 		x = 0;
@@ -284,6 +288,7 @@ static int razer_laptop_probe(struct hid_device *hdev, const struct hid_device_i
 	struct usb_interface *intf = to_usb_interface(hdev->dev.parent);
 	struct usb_device *usb_dev = interface_to_usbdev(intf);
 	struct razer_laptop *dev = NULL;
+
 	dev = kzalloc(sizeof(struct razer_laptop), GFP_KERNEL);
 
 	if (dev == NULL) {
@@ -326,6 +331,7 @@ static void razer_laptop_remove(struct hid_device *hdev)
 {
 	struct device *dev;
 	struct usb_interface *intf = to_usb_interface(hdev->dev.parent);
+
 	dev = hid_get_drvdata(hdev);
 	device_remove_file(&hdev->dev, &dev_attr_fan_rpm);
 	device_remove_file(&hdev->dev, &dev_attr_power_mode);

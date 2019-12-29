@@ -18,6 +18,7 @@ int get_max_fan_rpm(__u32 product_id)
 __u8 clampFanRPM(unsigned int rpm, __u32 product_id)
 {
 	int max_allowed = get_max_fan_rpm(product_id);
+
 	if (rpm > max_allowed)
 		return (__u8) (max_allowed / 100);
 	else if (rpm < ABSOLUTE_MIN_FAN_RPM)
