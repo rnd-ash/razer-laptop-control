@@ -131,7 +131,7 @@ int send_payload(struct usb_device *usb_dev, char *buffer,
 			      USB_CTRL_SET_TIMEOUT);
 	// Sleep for a specified number of us. If we send packets too quickly,
 	// the EC will ignore them
-	usleep_range(minWait,maxWait);
+	usleep_range(minWait, maxWait);
 	kfree(buf2);
 	return 0;
 }
@@ -169,7 +169,7 @@ static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr,
 		buffer[9] = 0x01;
 		buffer[10] = 0x00;
 		buffer[11] = 0x00;
-		send_payload(laptop->usb_dev, buffer,3400,3800);
+		send_payload(laptop->usb_dev, buffer, 3400, 3800);
 
 		// Unknown
 		buffer[5] = 0x04;
@@ -179,7 +179,7 @@ static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr,
 		buffer[9] = 0x01;
 		buffer[10] = laptop->gaming_mode;
 		buffer[11] = laptop->fan_rpm != 0 ? 0x01 : 0x00;
-		send_payload(laptop->usb_dev, buffer,204000,205000);
+		send_payload(laptop->usb_dev, buffer, 204000, 205000);
 
 		// Set fan RPM
 		buffer[5] = 0x03;
@@ -189,7 +189,7 @@ static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr,
 		buffer[9] = 0x01;
 		buffer[10] = request_fan_speed;
 		buffer[11] = 0x00;
-		send_payload(laptop->usb_dev, buffer,3400,3800);
+		send_payload(laptop->usb_dev, buffer, 3400, 3800);
 
 		// Unknown
 		buffer[5] = 0x04;
@@ -199,7 +199,7 @@ static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr,
 		buffer[9] = 0x02;
 		buffer[10] = 0x00;
 		buffer[11] = 0x00;
-		send_payload(laptop->usb_dev, buffer,3400, 3800);
+		send_payload(laptop->usb_dev, buffer, 3400, 3800);
 	} else {
 		dev_info(dev, "Requesting AUTO Fan");
 		laptop->fan_rpm = 0;
@@ -213,7 +213,7 @@ static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr,
 	buffer[9] = 0x02;
 	buffer[10] = laptop->gaming_mode;
 	buffer[11] = laptop->fan_rpm != 0 ? 0x01 : 0x00;
-	send_payload(laptop->usb_dev, buffer,204000,205000);
+	send_payload(laptop->usb_dev, buffer, 204000, 205000);
 
 	if (x != 0) {
 		// Set fan RPM
@@ -224,7 +224,7 @@ static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr,
 		buffer[9] = 0x02;
 		buffer[10] = request_fan_speed;
 		buffer[11] = 0x00;
-		send_payload(laptop->usb_dev, buffer,0,0);
+		send_payload(laptop->usb_dev, buffer, 0, 0);
 	}
 	return count;
 }
@@ -255,15 +255,15 @@ static ssize_t set_performance_mode(struct device *dev,
 		char buffer[90];
 
 		if (x == 0) {
-			dev_info(dev,"%s", "Enabling Balanced power mode");
+			dev_info(dev, "%s", "Enabling Balanced power mode");
 		} else if (x == 2 &&
 			   creatorModeAllowed(laptop->product_id) == 1) {
-			dev_info(dev,"%s", "Enabling Gaming power mode");
+			dev_info(dev, "%s", "Enabling Gaming power mode");
 		} else if (x == 1) {
-			dev_info(dev,"%s", "Enabling Gaming power mode");
+			dev_info(dev, "%s", "Enabling Gaming power mode");
 		} else {
 			x = 1;
-			dev_warn(dev,"%s",
+			dev_warn(dev, "%s",
 				 "Creator mode not allowed, falling back to performance");
 		}
 		laptop->gaming_mode = x;
@@ -282,7 +282,7 @@ static ssize_t set_performance_mode(struct device *dev,
 		buffer[9] = 0x01;
 		buffer[10] = laptop->gaming_mode;
 		buffer[11] = laptop->fan_rpm != 0 ? 0x01 : 0x00;
-		send_payload(laptop->usb_dev, buffer,0,0);
+		send_payload(laptop->usb_dev, buffer, 0, 0);
 		return count;
 	} else {
 		return -EINVAL;
