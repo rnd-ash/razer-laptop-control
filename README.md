@@ -26,7 +26,7 @@ sudo insmod razercontrol.ko
 ```
 cd "/sys/module/razercontrol/drivers/hid:Razer laptop System control driver"
 ```
-2. From here, ls shows that there are a couple devices to choose from:
+2. From here, ls shows that there are a couple devies to choose from:
 ```
 ls
 0003:1532:0233.0005  0003:1532:0233.0006  0003:1532:0233.0007  bind  module  new_id  uevent  unbind
@@ -75,4 +75,5 @@ Balanced (0) [Gaming (1)]
 ```
 
 NOTE: Turning on gaming mode can automatically make the fan increase in speed as the EC seems to switch to a more aggressive fan curve if still in automatic mode.
+
 NOTE²: Switching modes may reset your current fan_rpm setting to auto mode.
