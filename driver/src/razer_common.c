@@ -295,7 +295,7 @@ static int razer_laptop_probe(struct hid_device *hdev, const struct hid_device_i
     // Only the Keyboard can control the fan speed
     if (intf->cur_altsetting->desc.bInterfaceProtocol != USB_INTERFACE_PROTOCOL_KEYBOARD) {
         kfree(dev);
-        return 0;
+        return -ENODEV;
     }
     dev_info(&intf->dev, "Found supported device: %s\n", getDeviceDescription(dev->product_id));
     device_create_file(&hdev->dev, &dev_attr_fan_rpm);
@@ -305,12 +305,12 @@ static int razer_laptop_probe(struct hid_device *hdev, const struct hid_device_i
     if(hid_parse(hdev)) {
         hid_err(hdev, "Failed to parse device!\n");
         kfree(dev);
-        return 1;
+        return -ENODEV;
     }
     if(hid_hw_start(hdev, HID_CONNECT_DEFAULT)) {
         hid_err(hdev, "Failed to start device!\n");
         kfree(dev);
-        return 1;
+        return -ENODEV;
     }
 
     printk(KERN_INFO "Razer_laptop_control: Loaded\n");
