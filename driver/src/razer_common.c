@@ -107,7 +107,7 @@ void crc(char * buffer)
 
 /**
  * Sends payload to the EC controller
- * 
+ *
  * @param usb_device EC Controller USB device struct
  * @param buffer Payload buffer
  * @param minWait Minimum time to wait in us after sending the payload
@@ -231,13 +231,13 @@ static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr,
 
 /**
  * Sets gaming mode to on / off depending on user's input
- * 
+ *
  * This is quite simple. Just send packet with command ID of 0x02. with the 12th
  * bit toggled depending on if gaming mode should be on or off.
- * 
+ *
  * Cause ID 0x02 also deals with enabling / disabling manual fan RPM control, we
  * have to send the current fan control state as well within the message
- * 
+ *
  */
 static ssize_t set_performance_mode(struct device *dev,
 				    struct device_attribute *attr,

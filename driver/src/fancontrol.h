@@ -18,10 +18,10 @@
 
 /**
  * Returns the highest valid fan RPM for manual fan control
- * 
+ *
  * We could through a higher value at the EC, it may even accept it which would
  * be dangerous, so limit it to what we know is safe based on using Synapse.
- * 
+ *
  * Each model of Blade seems to have a different upper limit, so we require the
  * product ID to set the correct upper bound
  */
