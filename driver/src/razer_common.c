@@ -63,7 +63,8 @@ struct razer_laptop {
 /**
  * Called on reading fan_rpm sysfs entry
  */
-static ssize_t get_fan_rpm(struct device *dev, struct device_attribute *attr, char *buf)
+static ssize_t get_fan_rpm(struct device *dev, struct device_attribute *attr,
+			   char *buf)
 {
 	struct razer_laptop *laptop = dev_get_drvdata(dev);
 
@@ -76,7 +77,8 @@ static ssize_t get_fan_rpm(struct device *dev, struct device_attribute *attr, ch
 /**
  * Called on reading power_mode sysfs entry
  */
-static ssize_t get_performance_mode(struct device *dev, struct device_attribute *attr, char *buf)
+static ssize_t get_performance_mode(struct device *dev,
+				    struct device_attribute *attr, char *buf)
 {
 	struct razer_laptop *laptop = dev_get_drvdata(dev);
 
@@ -111,7 +113,8 @@ void crc(char * buffer)
  * @param minWait Minimum time to wait in us after sending the payload
  * @param maxWait Maximum time to wait in us after sending the payload
  */
-int send_payload(struct usb_device *usb_dev, char *buffer, unsigned long minWait, unsigned long maxWait)
+int send_payload(struct usb_device *usb_dev, char *buffer,
+		 unsigned long minWait, unsigned long maxWait)
 {
 	char * buf2;
 	int len;
@@ -126,13 +129,15 @@ int send_payload(struct usb_device *usb_dev, char *buffer, unsigned long minWait
 			      buf2,
 			      90,
 			      USB_CTRL_SET_TIMEOUT);
-	// Sleep for a specified number of us. If we send packets too quickly, the EC will ignore them
+	// Sleep for a specified number of us. If we send packets too quickly,
+	// the EC will ignore them
 	usleep_range(minWait,maxWait);
 	kfree(buf2);
 	return 0;
 }
 
-static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
+static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr,
+			   const char *buf, size_t count)
 {
 	struct razer_laptop *laptop = dev_get_drvdata(dev);
 	unsigned long x;
@@ -146,7 +151,8 @@ static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr, co
 	}
 	if (x != 0) {
 		request_fan_speed = clampFanRPM(x, laptop->product_id);
-		dev_info(dev, "Requesting MANUAL fan at %d RPM", ((int) request_fan_speed * 100));
+		dev_info(dev, "Requesting MANUAL fan at %d RPM",
+			 ((int) request_fan_speed * 100));
 		laptop->fan_rpm = request_fan_speed * 100;
 		// All packets
 		buffer[0] = 0x00;
@@ -226,20 +232,23 @@ static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr, co
 /**
  * Sets gaming mode to on / off depending on user's input
  * 
- * This is quite simple. Just send packet with command ID of 0x02. with the 12th bit toggled depending on if
- * gaming mode should be on or off.
+ * This is quite simple. Just send packet with command ID of 0x02. with the 12th
+ * bit toggled depending on if gaming mode should be on or off.
  * 
- * Cause ID 0x02 also deals with enabling / disabling manual fan RPM control, we have to send the current
- * fan control state as well within the message
+ * Cause ID 0x02 also deals with enabling / disabling manual fan RPM control, we
+ * have to send the current fan control state as well within the message
  * 
  */
-static ssize_t set_performance_mode(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
+static ssize_t set_performance_mode(struct device *dev,
+				    struct device_attribute *attr,
+				    const char *buf, size_t count)
 {
 	struct razer_laptop *laptop = dev_get_drvdata(dev);
 	unsigned long x;
 
 	if (kstrtol(buf, 10, &x)) {
-		dev_warn(dev, "User entered an invalid input for power mode. Defaulting to balanced");
+		dev_warn(dev,
+			 "User entered an invalid input for power mode. Defaulting to balanced");
 		x = 0;
 	}
 	if (x == 1 || x == 0 || x == 2){
@@ -247,13 +256,15 @@ static ssize_t set_performance_mode(struct device *dev, struct device_attribute 
 
 		if (x == 0) {
 			dev_info(dev,"%s", "Enabling Balanced power mode");
-		} else if (x == 2 && creatorModeAllowed(laptop->product_id) == 1) {
+		} else if (x == 2 &&
+			   creatorModeAllowed(laptop->product_id) == 1) {
 			dev_info(dev,"%s", "Enabling Gaming power mode");
 		} else if (x == 1) {
 			dev_info(dev,"%s", "Enabling Gaming power mode");
 		} else {
 			x = 1;
-			dev_warn(dev,"%s", "Creator mode not allowed, falling back to performance");
+			dev_warn(dev,"%s",
+				 "Creator mode not allowed, falling back to performance");
 		}
 		laptop->gaming_mode = x;
 		memset(buffer, 0x00, sizeof(buffer));
@@ -284,7 +295,8 @@ static DEVICE_ATTR(fan_rpm, 0664, get_fan_rpm, set_fan_rpm);
 static DEVICE_ATTR(power_mode, 0664, get_performance_mode, set_performance_mode);
 
 // Called on load module
-static int razer_laptop_probe(struct hid_device *hdev, const struct hid_device_id *id)
+static int razer_laptop_probe(struct hid_device *hdev,
+			      const struct hid_device_id *id)
 {
 	struct usb_interface *intf = to_usb_interface(hdev->dev.parent);
 	struct usb_device *usb_dev = interface_to_usbdev(intf);
@@ -301,13 +313,15 @@ static int razer_laptop_probe(struct hid_device *hdev, const struct hid_device_i
 	dev->fan_rpm = 0;
 	dev->gaming_mode = 0;
 	dev->product_id = hdev->product;
-	// Internal laptop touchpad found (over USB Bus). Don't bind to it so unload
+	// Internal laptop touchpad found (over USB Bus).
+	// Don't bind to it so unload.
 	// Only the Keyboard can control the fan speed
 	if (intf->cur_altsetting->desc.bInterfaceProtocol != USB_INTERFACE_PROTOCOL_KEYBOARD) {
 		kfree(dev);
 		return -ENODEV;
 	}
-	dev_info(&intf->dev, "Found supported device: %s\n", getDeviceDescription(dev->product_id));
+	dev_info(&intf->dev, "Found supported device: %s\n",
+		 getDeviceDescription(dev->product_id));
 	device_create_file(&hdev->dev, &dev_attr_fan_rpm);
 	device_create_file(&hdev->dev, &dev_attr_power_mode);
 
