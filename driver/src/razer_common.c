@@ -284,7 +284,6 @@ static int razer_laptop_probe(struct hid_device *hdev, const struct hid_device_i
         dev_err(&intf->dev, "Out of memory!\n");
         return -ENOMEM;
     }
-    mutex_init(&dev->lock);
     dev->usb_dev = usb_dev;
     dev->fan_rpm = 0;
     dev->gaming_mode = 0;
