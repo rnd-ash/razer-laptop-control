@@ -14,7 +14,8 @@ MODULE_VERSION("0.0.1");
 /**
  * Returns a pointer to string of the product name of the device
  */
-char * getDeviceDescription(int product_id) {
+char * getDeviceDescription(int product_id)
+{
     switch(product_id) {
         case BLADE_2016_END:
             return "Blade 15 late 2016";
@@ -61,7 +62,8 @@ struct razer_laptop {
 /**
  * Called on reading fan_rpm sysfs entry
  */
-static ssize_t get_fan_rpm(struct device *dev, struct device_attribute *attr, char *buf) {
+static ssize_t get_fan_rpm(struct device *dev, struct device_attribute *attr, char *buf)
+{
    struct razer_laptop *laptop = dev_get_drvdata(dev);
     if (laptop->fan_rpm == 0) {
         return sprintf(buf, "%s", "Automatic (0)\n");
@@ -74,7 +76,8 @@ static ssize_t get_fan_rpm(struct device *dev, struct device_attribute *attr, ch
 /**
  * Called on reading power_mode sysfs entry
  */
-static ssize_t get_performance_mode(struct device *dev, struct device_attribute *attr, char *buf) {
+static ssize_t get_performance_mode(struct device *dev, struct device_attribute *attr, char *buf)
+{
     struct razer_laptop *laptop = dev_get_drvdata(dev);
     if (laptop->gaming_mode == 0) {
         return sprintf(buf, "%s", "Balanced (0)\n");
@@ -89,7 +92,8 @@ static ssize_t get_performance_mode(struct device *dev, struct device_attribute 
  * Generates a checksum Bit and places it in the 89th byte in the buffer array
  * If this is invalid then the EC will ignore the incomming message
  */
-void crc(char * buffer) {
+void crc(char * buffer)
+{
     int res = 0;
     int i;
     // Simple CRC. Iterate over all bits from 2-87 and XOR them together
@@ -107,7 +111,8 @@ void crc(char * buffer) {
  * @param minWait Minimum time to wait in us after sending the payload
  * @param maxWait Maximum time to wait in us after sending the payload
  */
-int send_payload(struct usb_device *usb_dev, char *buffer, unsigned long minWait, unsigned long maxWait) {
+int send_payload(struct usb_device *usb_dev, char *buffer, unsigned long minWait, unsigned long maxWait)
+{
     char * buf2;
     int len;
 
@@ -128,7 +133,8 @@ int send_payload(struct usb_device *usb_dev, char *buffer, unsigned long minWait
     return 0;
 }
 
-static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
+static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
+{
     struct razer_laptop *laptop = dev_get_drvdata(dev);
     unsigned long x;
     __u8 request_fan_speed;
@@ -227,7 +233,8 @@ static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr, co
  * fan control state as well within the message
  * 
  */
-static ssize_t set_performance_mode(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
+static ssize_t set_performance_mode(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
+{
     struct razer_laptop *laptop = dev_get_drvdata(dev);
     unsigned long x;
     if (kstrtol(buf, 10, &x)) {
@@ -276,7 +283,8 @@ static DEVICE_ATTR(fan_rpm, 0664, get_fan_rpm, set_fan_rpm);
 static DEVICE_ATTR(power_mode, 0664, get_performance_mode, set_performance_mode);
 
 // Called on load module
-static int razer_laptop_probe(struct hid_device *hdev, const struct hid_device_id *id) {
+static int razer_laptop_probe(struct hid_device *hdev, const struct hid_device_id *id)
+{
     struct usb_interface *intf = to_usb_interface(hdev->dev.parent);
     struct usb_device *usb_dev = interface_to_usbdev(intf);
     struct razer_laptop *dev = NULL;
@@ -318,7 +326,8 @@ static int razer_laptop_probe(struct hid_device *hdev, const struct hid_device_i
 }
 
 // Called on unload module
-static void razer_laptop_remove(struct hid_device *hdev) {
+static void razer_laptop_remove(struct hid_device *hdev)
+{
     struct device *dev;
     struct usb_interface *intf = to_usb_interface(hdev->dev.parent);
     dev = hid_get_drvdata(hdev);
