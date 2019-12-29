@@ -107,7 +107,7 @@ void crc(char * buffer) {
  * @param minWait Minimum time to wait in us after sending the payload
  * @param maxWait Maximum time to wait in us after sending the payload
  */
-int send_payload(struct usb_device *usb_dev, void const *buffer, unsigned long minWait, unsigned long maxWait) {
+int send_payload(struct usb_device *usb_dev, char *buffer, unsigned long minWait, unsigned long maxWait) {
     char * buf2;
     int len;
 
