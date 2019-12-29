@@ -313,7 +313,7 @@ static int razer_laptop_probe(struct hid_device *hdev, const struct hid_device_i
         return 1;
     }
 
-    printk(KERN_INFO, "Razer_laptop_control: Loaded\n");
+    printk(KERN_INFO "Razer_laptop_control: Loaded\n");
     return 0;
 }
 
