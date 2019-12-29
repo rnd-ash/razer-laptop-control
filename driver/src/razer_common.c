@@ -17,7 +17,7 @@ MODULE_VERSION("0.0.1");
  */
 char *getDeviceDescription(int product_id)
 {
-	switch(product_id) {
+	switch (product_id) {
 	case BLADE_2016_END:
 		return "Blade 15 late 2016";
 	case BLADE_2018_BASE:
@@ -251,7 +251,7 @@ static ssize_t set_performance_mode(struct device *dev,
 			 "User entered an invalid input for power mode. Defaulting to balanced");
 		x = 0;
 	}
-	if (x == 1 || x == 0 || x == 2){
+	if (x == 1 || x == 0 || x == 2) {
 		char buffer[90];
 
 		if (x == 0) {
@@ -326,12 +326,12 @@ static int razer_laptop_probe(struct hid_device *hdev,
 	device_create_file(&hdev->dev, &dev_attr_power_mode);
 
 	hid_set_drvdata(hdev, dev);
-	if(hid_parse(hdev)) {
+	if (hid_parse(hdev)) {
 		hid_err(hdev, "Failed to parse device!\n");
 		kfree(dev);
 		return -ENODEV;
 	}
-	if(hid_hw_start(hdev, HID_CONNECT_DEFAULT)) {
+	if (hid_hw_start(hdev, HID_CONNECT_DEFAULT)) {
 		hid_err(hdev, "Failed to start device!\n");
 		kfree(dev);
 		return -ENODEV;
