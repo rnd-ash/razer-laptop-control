@@ -26,7 +26,7 @@ sudo insmod razercontrol.ko
 ```
 cd "/sys/module/razercontrol/drivers/hid:Razer laptop System control driver"
 ```
-2. From here, ls shows that there are a couple devies to choose from:
+2. From here, ls shows that there are a couple devices to choose from:
 ```
 ls
 0003:1532:0233.0005  0003:1532:0233.0006  0003:1532:0233.0007  bind  module  new_id  uevent  unbind
