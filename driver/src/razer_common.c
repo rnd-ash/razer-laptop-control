@@ -15,7 +15,7 @@ MODULE_VERSION("0.0.1");
 /**
  * Returns a pointer to string of the product name of the device
  */
-char * getDeviceDescription(int product_id)
+char *getDeviceDescription(int product_id)
 {
 	switch(product_id) {
 	case BLADE_2016_END:
@@ -94,7 +94,7 @@ static ssize_t get_performance_mode(struct device *dev,
  * Generates a checksum Bit and places it in the 89th byte in the buffer array
  * If this is invalid then the EC will ignore the incomming message
  */
-void crc(char * buffer)
+void crc(char *buffer)
 {
 	int res = 0;
 	int i;
@@ -116,7 +116,7 @@ void crc(char * buffer)
 int send_payload(struct usb_device *usb_dev, char *buffer,
 		 unsigned long minWait, unsigned long maxWait)
 {
-	char * buf2;
+	char *buf2;
 	int len;
 
 	crc(buffer); // Generate checksum for payload
