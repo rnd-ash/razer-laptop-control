@@ -75,4 +75,4 @@ Balanced (0) [Gaming (1)]
 ```
 
 NOTE: Turning on gaming mode can automatically make the fan increase in speed as the EC seems to switch to a more aggressive fan curve if still in automatic mode.
-NOTE2: Switching modes may reset your current fan_rpm setting to auto mode.
+NOTE²: Switching modes may reset your current fan_rpm setting to auto mode.
