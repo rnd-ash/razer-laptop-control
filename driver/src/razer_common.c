@@ -141,7 +141,7 @@ static ssize_t fan_rpm_store(struct device *dev, struct device_attribute *attr,
 {
 	struct razer_laptop *laptop = dev_get_drvdata(dev);
 	unsigned long x;
-	__u8 request_fan_speed;
+	u8 request_fan_speed;
 	char buffer[90];
 
 	mutex_lock(&laptop->lock);
