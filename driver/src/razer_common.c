@@ -52,6 +52,26 @@ static char *getDeviceDescription(int product_id)
 		return "UNKNOWN";
 	}
 }
+struct key_colour {
+	__u8 r;
+	__u8 g;
+	__u8 b;
+};
+
+struct key_row {
+	__u8 __res;
+	__u8 id;
+	__u8 __res1[3];
+	__u8 cmd_id;
+	__u8 sub_cmd;
+	__u8 sub_cmd_id;
+	__u8 unk1;
+	__u8 row_id;
+	__u8 __res4;
+	__u8 unk2;
+	__u8 __res6[3];
+	struct key_colour key_data[15];
+};
 
 // Struct to hold some basic data about the laptops current state
 struct razer_laptop {
@@ -64,45 +84,38 @@ struct razer_laptop {
 
 static ssize_t wave_mode_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
 	struct razer_laptop *laptop = dev_get_drvdata(dev);
-	char buffer[90];
-	mutex_lock(&laptop->lock);
-	dev_info(dev, "Keyboard going to Wave\n");
-	__u8 x;
-	for (x = 0; x <= 5; x++) {
-		memset(buffer, 0x00, sizeof(buffer));
-		buffer[0] = 0x00;
-		buffer[1] = 0x1f;
-		buffer[2] = 0x00;
-		buffer[3] = 0x00;
-		buffer[4] = 0x00;
-		buffer[5] = 0x34;
-		buffer[6] = 0x03;
-		buffer[7] = 0x0b;
-		buffer[8] = 0xff;
-		buffer[9] = x;
-		buffer[10] == 0x00;
-		buffer[11] = 0x0f;
-		buffer[12] = 0x00;
-		buffer[13] = 0x00;
-		buffer[14] = 0x00;
-		int i = 15;
-		while (i < 60) {
-			__u8 rnd = 0;
-			if (x == 3 || x == 5)
-				buffer[i] = 255; // Red control
-			if (x == 0 || x == 2 || x == 4)
-				buffer[i+1] = 255;// Green control
-			if (x == 1 || x == 2 || x == 5)
-				buffer[i+2] = 255; // Blue control
-			i+=3;
+	struct key_row rows[6];
+	memset(rows, 0x00, sizeof(rows));
+	unsigned char tmp[90];
+	int i;
+	for (i = 0; i < 6; i++) {
+		memset(tmp, 0x00, sizeof(tmp));
+		rows[i].id = 0x1f;
+		rows[i].cmd_id = 0x34;
+		rows[i].sub_cmd = 0x03;
+		rows[i].sub_cmd_id = 0x0b;
+		rows[i].row_id = i;
+		rows[i].unk1 = 0xff;
+		rows[i].unk2 = 0x0f;
+		int x;
+		for (x = 0; x <= 15; x++) {
+			if (x % 3 == 0 && x != 0) {
+				rows[i].key_data[x-1].r = 255/i;
+				rows[i].key_data[x-2].g = 255/i;
+				rows[i].key_data[x-3].b = 255/i;
+			}
 		}
+		memcpy(tmp, &rows[i], 90);
+		int t;
 		dev_info(dev, "Sending\n");
-		send_payload(laptop->usb_dev, buffer, 1000, 1000);
+		mutex_lock(&laptop->lock);
+		send_payload(laptop->usb_dev, tmp, 1000, 1000);
+		mutex_unlock(&laptop->lock);
+		
 	}
-	mutex_unlock(&laptop->lock);
 	char buffer2[90];
 	mutex_lock(&laptop->lock);
-	memset(buffer, 0x00, sizeof(buffer2));
+	memset(buffer2, 0x00, sizeof(buffer2));
 	buffer2[0] = 0x00;
 	buffer2[1] = 0x1f;
 	buffer2[2] = 0x00;
