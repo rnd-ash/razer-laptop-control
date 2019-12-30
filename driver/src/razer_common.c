@@ -51,44 +51,6 @@ static char *getDeviceDescription(int product_id)
 	}
 }
 
-// Struct to hold some basic data about the laptops current state
-struct razer_laptop {
-	int product_id;			// Product ID
-	struct usb_device *usb_dev;	// USB Device we wish to talk to
-	struct mutex lock;		// Mutex
-	int fan_rpm;			// Fan RPM of manual mod (0 = AUTO)
-	int gaming_mode;		// Gaming mode (0 = Balanced) (1 = Gaming AKA Higher CPU TDP)
-};
-
-/**
- * Called on reading fan_rpm sysfs entry
- */
-static ssize_t fan_rpm_show(struct device *dev, struct device_attribute *attr,
-			    char *buf)
-{
-	struct razer_laptop *laptop = dev_get_drvdata(dev);
-
-	if (laptop->fan_rpm == 0)
-		return sprintf(buf, "%s", "Automatic (0)\n");
-
-	return sprintf(buf, "%d RPM\n", laptop->fan_rpm);
-}
-
-/**
- * Called on reading power_mode sysfs entry
- */
-static ssize_t power_mode_show(struct device *dev,
-			       struct device_attribute *attr, char *buf)
-{
-	struct razer_laptop *laptop = dev_get_drvdata(dev);
-
-	if (laptop->gaming_mode == 0)
-		return sprintf(buf, "%s", "Balanced (0)\n");
-	else if (laptop->gaming_mode == 1)
-		return sprintf(buf, "%s", "Gaming (1)\n");
-
-	return sprintf(buf, "%s", "Creator (2)\n");
-}
 
 /**
  * Generates a checksum Bit and places it in the 89th byte in the buffer array
@@ -135,6 +97,102 @@ static int send_payload(struct usb_device *usb_dev, char *buffer,
 	kfree(buf2);
 	return 0;
 }
+
+// Struct to hold some basic data about the laptops current state
+struct razer_laptop {
+	int product_id;			// Product ID
+	struct usb_device *usb_dev;	// USB Device we wish to talk to
+	struct mutex lock;		// Mutex
+	int fan_rpm;			// Fan RPM of manual mod (0 = AUTO)
+	int gaming_mode;		// Gaming mode (0 = Balanced) (1 = Gaming AKA Higher CPU TDP)
+};
+
+/**
+ * Called on reading fan_rpm sysfs entry
+ */
+static ssize_t fan_rpm_show(struct device *dev, struct device_attribute *attr,
+			    char *buf)
+{
+	struct razer_laptop *laptop = dev_get_drvdata(dev);
+
+	if (laptop->fan_rpm == 0)
+		return sprintf(buf, "%s", "Automatic (0)\n");
+
+	return sprintf(buf, "%d RPM\n", laptop->fan_rpm);
+}
+
+/**
+ * Called on reading power_mode sysfs entry
+ */
+static ssize_t power_mode_show(struct device *dev,
+			       struct device_attribute *attr, char *buf)
+{
+	struct razer_laptop *laptop = dev_get_drvdata(dev);
+
+	if (laptop->gaming_mode == 0)
+		return sprintf(buf, "%s", "Balanced (0)\n");
+	else if (laptop->gaming_mode == 1)
+		return sprintf(buf, "%s", "Gaming (1)\n");
+
+	return sprintf(buf, "%s", "Creator (2)\n");
+}
+
+static ssize_t wave_mode_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
+	struct razer_laptop *laptop = dev_get_drvdata(dev);
+	char buffer[90];
+	mutex_lock(&laptop->lock);
+	dev_info(dev, "Keyboard going to Wave\n");
+	__u8 x;
+	for (x = 0; x <= 5; x++) {
+		memset(buffer, 0x00, sizeof(buffer));
+		buffer[0] = 0x00;
+		buffer[1] = 0x1f;
+		buffer[2] = 0x00;
+		buffer[3] = 0x00;
+		buffer[4] = 0x00;
+		buffer[5] = 0x34;
+		buffer[6] = 0x03;
+		buffer[7] = 0x0b;
+		buffer[8] = 0xff;
+		buffer[9] = x;
+		buffer[10] == 0x00;
+		buffer[11] = 0x0f;
+		buffer[12] = 0x00;
+		buffer[13] = 0x00;
+		buffer[14] = 0x00;
+		int i = 15;
+		while (i < 60) {
+			__u8 rnd = 0;
+			if (x == 3 || x == 5)
+				buffer[i] = 255; // Red control
+			if (x == 0 || x == 2 || x == 4)
+				buffer[i+1] = 255;// Green control
+			if (x == 1 || x == 2 || x == 5)
+				buffer[i+2] = 255; // Blue control
+			i+=3;
+		}
+		dev_info(dev, "Sending\n");
+		send_payload(laptop->usb_dev, buffer, 1000, 1000);
+	}
+	mutex_unlock(&laptop->lock);
+	char buffer2[90];
+	mutex_lock(&laptop->lock);
+	memset(buffer, 0x00, sizeof(buffer2));
+	buffer2[0] = 0x00;
+	buffer2[1] = 0x1f;
+	buffer2[2] = 0x00;
+	buffer2[3] = 0x00;
+	buffer2[4] = 0x00;
+	buffer2[5] = 0x02;
+	buffer2[6] = 0x03;
+	buffer2[7] = 0x0a;
+	buffer2[8] = 0x05;
+	buffer2[9] = 0x00;
+	send_payload(laptop->usb_dev, buffer2, 1000, 1000);
+	mutex_unlock(&laptop->lock);
+	return count;
+}
+
 
 static ssize_t fan_rpm_store(struct device *dev, struct device_attribute *attr,
 			     const char *buf, size_t count)
@@ -301,6 +359,7 @@ static ssize_t power_mode_store(struct device *dev,
 // Set our device attributes in sysfs
 static DEVICE_ATTR_RW(fan_rpm);
 static DEVICE_ATTR_RW(power_mode);
+static DEVICE_ATTR_WO(wave_mode);
 
 // Called on load module
 static int razer_laptop_probe(struct hid_device *hdev,
@@ -330,6 +389,7 @@ static int razer_laptop_probe(struct hid_device *hdev,
 		 getDeviceDescription(dev->product_id));
 	device_create_file(&hdev->dev, &dev_attr_fan_rpm);
 	device_create_file(&hdev->dev, &dev_attr_power_mode);
+	device_create_file(&hdev->dev, &dev_attr_wave_mode);
 
 	hid_set_drvdata(hdev, dev);
 	if (hid_parse(hdev)) {
@@ -355,6 +415,8 @@ static void razer_laptop_remove(struct hid_device *hdev)
 	dev = hid_get_drvdata(hdev);
 	device_remove_file(&hdev->dev, &dev_attr_fan_rpm);
 	device_remove_file(&hdev->dev, &dev_attr_power_mode);
+	device_remove_file(&hdev->dev, &dev_attr_wave_mode);
+
 	hid_hw_stop(hdev);
 	kfree(dev);
 	dev_info(&intf->dev, "Razer_laptop_control: Unloaded\n");
