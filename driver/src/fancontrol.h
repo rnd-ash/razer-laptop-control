@@ -30,7 +30,7 @@ int get_max_fan_rpm(__u32 product_id);
 /**
  * Clamps input manual fan RPM to what is allowed by the laptop
  */
-u8 clampFanRPM(unsigned int rpm, __u32 product_id);
+u8 clamp_fan_rpm(unsigned int rpm, __u32 product_id);
 
 
 /**

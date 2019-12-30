@@ -152,7 +152,7 @@ static ssize_t fan_rpm_store(struct device *dev, struct device_attribute *attr,
 		request_fan_speed = 0;
 	}
 	if (x != 0) {
-		request_fan_speed = clampFanRPM(x, laptop->product_id);
+		request_fan_speed = clamp_fan_rpm(x, laptop->product_id);
 		dev_info(dev, "Requesting MANUAL fan at %d RPM",
 			 ((int) request_fan_speed * 100));
 		laptop->fan_rpm = request_fan_speed * 100;

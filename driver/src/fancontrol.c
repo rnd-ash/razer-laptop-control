@@ -16,7 +16,7 @@ int get_max_fan_rpm(__u32 product_id)
 	}
 }
 
-u8 clampFanRPM(unsigned int rpm, __u32 product_id)
+u8 clamp_fan_rpm(unsigned int rpm, __u32 product_id)
 {
 	int max_allowed = get_max_fan_rpm(product_id);
 
