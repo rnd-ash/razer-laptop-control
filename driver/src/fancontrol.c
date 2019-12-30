@@ -37,7 +37,7 @@ u8 clamp_fan_rpm(unsigned int rpm, __u32 product_id)
 	return (u8)(rpm / 100);
 }
 
-int creatorModeAllowed(__u32 product_id)
+int creator_mode_allowed(__u32 product_id)
 {
 	switch (product_id) {
 	case BLADE_2019_ADV:

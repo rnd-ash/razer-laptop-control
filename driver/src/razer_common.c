@@ -263,7 +263,7 @@ static ssize_t power_mode_store(struct device *dev,
 		if (x == 0) {
 			dev_info(dev, "%s", "Enabling Balanced power mode");
 		} else if (x == 2 &&
-			   creatorModeAllowed(laptop->product_id) == 1) {
+			   creator_mode_allowed(laptop->product_id) == 1) {
 			dev_info(dev, "%s", "Enabling Gaming power mode");
 		} else if (x == 1) {
 			dev_info(dev, "%s", "Enabling Gaming power mode");
