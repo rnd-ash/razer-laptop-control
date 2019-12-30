@@ -15,7 +15,7 @@ MODULE_VERSION("0.0.1");
 /**
  * Returns a pointer to string of the product name of the device
  */
-char *getDeviceDescription(int product_id)
+static char *getDeviceDescription(int product_id)
 {
 	switch (product_id) {
 	case BLADE_2016_END:
@@ -63,8 +63,8 @@ struct razer_laptop {
 /**
  * Called on reading fan_rpm sysfs entry
  */
-static ssize_t get_fan_rpm(struct device *dev, struct device_attribute *attr,
-			   char *buf)
+static ssize_t fan_rpm_show(struct device *dev, struct device_attribute *attr,
+			    char *buf)
 {
 	struct razer_laptop *laptop = dev_get_drvdata(dev);
 
@@ -77,8 +77,8 @@ static ssize_t get_fan_rpm(struct device *dev, struct device_attribute *attr,
 /**
  * Called on reading power_mode sysfs entry
  */
-static ssize_t get_performance_mode(struct device *dev,
-				    struct device_attribute *attr, char *buf)
+static ssize_t power_mode_show(struct device *dev,
+			       struct device_attribute *attr, char *buf)
 {
 	struct razer_laptop *laptop = dev_get_drvdata(dev);
 
@@ -94,7 +94,7 @@ static ssize_t get_performance_mode(struct device *dev,
  * Generates a checksum Bit and places it in the 89th byte in the buffer array
  * If this is invalid then the EC will ignore the incomming message
  */
-void crc(char *buffer)
+static void crc(char *buffer)
 {
 	int res = 0;
 	int i;
@@ -113,8 +113,8 @@ void crc(char *buffer)
  * @param minWait Minimum time to wait in us after sending the payload
  * @param maxWait Maximum time to wait in us after sending the payload
  */
-int send_payload(struct usb_device *usb_dev, char *buffer,
-		 unsigned long minWait, unsigned long maxWait)
+static int send_payload(struct usb_device *usb_dev, char *buffer,
+			unsigned long minWait, unsigned long maxWait)
 {
 	char *buf2;
 	int len;
@@ -136,13 +136,15 @@ int send_payload(struct usb_device *usb_dev, char *buffer,
 	return 0;
 }
 
-static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr,
-			   const char *buf, size_t count)
+static ssize_t fan_rpm_store(struct device *dev, struct device_attribute *attr,
+			     const char *buf, size_t count)
 {
 	struct razer_laptop *laptop = dev_get_drvdata(dev);
 	unsigned long x;
 	__u8 request_fan_speed;
 	char buffer[90];
+
+	mutex_lock(&laptop->lock);
 
 	memset(buffer, 0x00, sizeof(buffer));
 	if (kstrtol(buf, 10, &x)) { // Convert users input to integer
@@ -226,6 +228,7 @@ static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr,
 		buffer[11] = 0x00;
 		send_payload(laptop->usb_dev, buffer, 0, 0);
 	}
+	mutex_unlock(&laptop->lock);
 	return count;
 }
 
@@ -239,12 +242,15 @@ static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr,
  * have to send the current fan control state as well within the message
  *
  */
-static ssize_t set_performance_mode(struct device *dev,
-				    struct device_attribute *attr,
-				    const char *buf, size_t count)
+static ssize_t power_mode_store(struct device *dev,
+				struct device_attribute *attr,
+				const char *buf, size_t count)
 {
 	struct razer_laptop *laptop = dev_get_drvdata(dev);
+	ssize_t retval = count;
 	unsigned long x;
+
+	mutex_lock(&laptop->lock);
 
 	if (kstrtol(buf, 10, &x)) {
 		dev_warn(dev,
@@ -283,16 +289,18 @@ static ssize_t set_performance_mode(struct device *dev,
 		buffer[10] = laptop->gaming_mode;
 		buffer[11] = laptop->fan_rpm != 0 ? 0x01 : 0x00;
 		send_payload(laptop->usb_dev, buffer, 0, 0);
-		return count;
 	} else {
-		return -EINVAL;
+		retval = -EINVAL;
 	}
-	return count;
+
+	mutex_unlock(&laptop->lock);
+
+	return retval;
 }
 
 // Set our device attributes in sysfs
-static DEVICE_ATTR(fan_rpm, 0664, get_fan_rpm, set_fan_rpm);
-static DEVICE_ATTR(power_mode, 0664, get_performance_mode, set_performance_mode);
+static DEVICE_ATTR_RW(fan_rpm);
+static DEVICE_ATTR_RW(power_mode);
 
 // Called on load module
 static int razer_laptop_probe(struct hid_device *hdev,
@@ -300,14 +308,12 @@ static int razer_laptop_probe(struct hid_device *hdev,
 {
 	struct usb_interface *intf = to_usb_interface(hdev->dev.parent);
 	struct usb_device *usb_dev = interface_to_usbdev(intf);
-	struct razer_laptop *dev = NULL;
+	struct razer_laptop *dev;
 
 	dev = kzalloc(sizeof(struct razer_laptop), GFP_KERNEL);
-
-	if (dev == NULL) {
-		dev_err(&intf->dev, "Out of memory!\n");
+	if (!dev)
 		return -ENOMEM;
-	}
+
 	mutex_init(&dev->lock);
 	dev->usb_dev = usb_dev;
 	dev->fan_rpm = 0;
@@ -337,7 +343,6 @@ static int razer_laptop_probe(struct hid_device *hdev,
 		return -ENODEV;
 	}
 
-	printk(KERN_INFO "Razer_laptop_control: Loaded\n");
 	return 0;
 }
 
