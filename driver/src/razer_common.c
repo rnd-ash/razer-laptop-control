@@ -300,14 +300,12 @@ static int razer_laptop_probe(struct hid_device *hdev,
 {
 	struct usb_interface *intf = to_usb_interface(hdev->dev.parent);
 	struct usb_device *usb_dev = interface_to_usbdev(intf);
-	struct razer_laptop *dev = NULL;
+	struct razer_laptop *dev;
 
 	dev = kzalloc(sizeof(struct razer_laptop), GFP_KERNEL);
-
-	if (dev == NULL) {
-		dev_err(&intf->dev, "Out of memory!\n");
+	if (!dev)
 		return -ENOMEM;
-	}
+
 	mutex_init(&dev->lock);
 	dev->usb_dev = usb_dev;
 	dev->fan_rpm = 0;
