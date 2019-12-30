@@ -326,12 +326,7 @@ static int razer_laptop_probe(struct hid_device *hdev,
 		kfree(dev);
 		return -ENODEV;
 	}
-	dev_info(&intf->dev, "Found supported device: %s\n",
-		 getDeviceDescription(dev->product_id));
-	device_create_file(&hdev->dev, &dev_attr_fan_rpm);
-	device_create_file(&hdev->dev, &dev_attr_power_mode);
 
-	hid_set_drvdata(hdev, dev);
 	if (hid_parse(hdev)) {
 		hid_err(hdev, "Failed to parse device!\n");
 		kfree(dev);
@@ -342,6 +337,13 @@ static int razer_laptop_probe(struct hid_device *hdev,
 		kfree(dev);
 		return -ENODEV;
 	}
+
+	hid_set_drvdata(hdev, dev);
+	device_create_file(&hdev->dev, &dev_attr_fan_rpm);
+	device_create_file(&hdev->dev, &dev_attr_power_mode);
+
+	dev_info(&intf->dev, "Found supported device: %s\n",
+		 getDeviceDescription(dev->product_id));
 
 	return 0;
 }
