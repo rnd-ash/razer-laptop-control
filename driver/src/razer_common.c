@@ -82,13 +82,15 @@ struct razer_laptop {
 	int gaming_mode;		// Gaming mode (0 = Balanced) (1 = Gaming AKA Higher CPU TDP)
 };
 
-static ssize_t wave_mode_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
+static ssize_t static_mode_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
+	dev_info(dev,"Test");
 	struct razer_laptop *laptop = dev_get_drvdata(dev);
 	struct key_row rows[6];
 	memset(rows, 0x00, sizeof(rows));
 	unsigned char tmp[90];
 	int i;
 	for (i = 0; i < 6; i++) {
+		dev_info(dev, "Building\n");
 		memset(tmp, 0x00, sizeof(tmp));
 		rows[i].id = 0x1f;
 		rows[i].cmd_id = 0x34;
@@ -98,15 +100,12 @@ static ssize_t wave_mode_store(struct device *dev, struct device_attribute *attr
 		rows[i].unk1 = 0xff;
 		rows[i].unk2 = 0x0f;
 		int x;
-		for (x = 0; x <= 15; x++) {
-			if (x % 3 == 0 && x != 0) {
-				rows[i].key_data[x-1].r = 255/i;
-				rows[i].key_data[x-2].g = 255/i;
-				rows[i].key_data[x-3].b = 255/i;
-			}
+		for (x = 0; x < 15; x+=3) {
+			rows[i].key_data[x].r = 255;
+			rows[i].key_data[x+1].g = 255;
+			rows[i].key_data[x+2].b = 255;
 		}
 		memcpy(tmp, &rows[i], 90);
-		int t;
 		dev_info(dev, "Sending\n");
 		mutex_lock(&laptop->lock);
 		send_payload(laptop->usb_dev, tmp, 1000, 1000);
@@ -139,7 +138,7 @@ static ssize_t reactive_mode_store(struct device *dev, struct device_attribute *
 static ssize_t breath_mode_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
 	return count;
 }
-static ssize_t static_mode_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
+static ssize_t wave_mode_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
 	return count;
 }
 
