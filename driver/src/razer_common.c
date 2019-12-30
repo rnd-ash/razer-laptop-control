@@ -6,6 +6,8 @@
 #include <linux/module.h>
 #include "fancontrol.h"
 #include "defines.h"
+#include "core.h"
+
 
 MODULE_AUTHOR("Ashcon Mohseninia");
 MODULE_DESCRIPTION("Razer system control driver for laptops");
@@ -51,53 +53,6 @@ static char *getDeviceDescription(int product_id)
 	}
 }
 
-
-/**
- * Generates a checksum Bit and places it in the 89th byte in the buffer array
- * If this is invalid then the EC will ignore the incomming message
- */
-static void crc(char *buffer)
-{
-	int res = 0;
-	int i;
-	// Simple CRC. Iterate over all bits from 2-87 and XOR them together
-	for (i = 2; i < 88; i++)
-		res ^= buffer[i];
-
-	buffer[88] = res; // Set the checksum bit
-}
-
-/**
- * Sends payload to the EC controller
- *
- * @param usb_device EC Controller USB device struct
- * @param buffer Payload buffer
- * @param minWait Minimum time to wait in us after sending the payload
- * @param maxWait Maximum time to wait in us after sending the payload
- */
-static int send_payload(struct usb_device *usb_dev, char *buffer,
-			unsigned long minWait, unsigned long maxWait)
-{
-	char *buf2;
-	int len;
-
-	crc(buffer); // Generate checksum for payload
-	buf2 = kmemdup(buffer, sizeof(char[90]), GFP_KERNEL);
-	len = usb_control_msg(usb_dev, usb_sndctrlpipe(usb_dev, 0),
-			      0x09,
-			      0x21,
-			      0x0300,
-			      0x0002,
-			      buf2,
-			      90,
-			      USB_CTRL_SET_TIMEOUT);
-	// Sleep for a specified number of us. If we send packets too quickly,
-	// the EC will ignore them
-	usleep_range(minWait, maxWait);
-	kfree(buf2);
-	return 0;
-}
-
 // Struct to hold some basic data about the laptops current state
 struct razer_laptop {
 	int product_id;			// Product ID
@@ -106,36 +61,6 @@ struct razer_laptop {
 	int fan_rpm;			// Fan RPM of manual mod (0 = AUTO)
 	int gaming_mode;		// Gaming mode (0 = Balanced) (1 = Gaming AKA Higher CPU TDP)
 };
-
-/**
- * Called on reading fan_rpm sysfs entry
- */
-static ssize_t fan_rpm_show(struct device *dev, struct device_attribute *attr,
-			    char *buf)
-{
-	struct razer_laptop *laptop = dev_get_drvdata(dev);
-
-	if (laptop->fan_rpm == 0)
-		return sprintf(buf, "%s", "Automatic (0)\n");
-
-	return sprintf(buf, "%d RPM\n", laptop->fan_rpm);
-}
-
-/**
- * Called on reading power_mode sysfs entry
- */
-static ssize_t power_mode_show(struct device *dev,
-			       struct device_attribute *attr, char *buf)
-{
-	struct razer_laptop *laptop = dev_get_drvdata(dev);
-
-	if (laptop->gaming_mode == 0)
-		return sprintf(buf, "%s", "Balanced (0)\n");
-	else if (laptop->gaming_mode == 1)
-		return sprintf(buf, "%s", "Gaming (1)\n");
-
-	return sprintf(buf, "%s", "Creator (2)\n");
-}
 
 static ssize_t wave_mode_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
 	struct razer_laptop *laptop = dev_get_drvdata(dev);
@@ -192,7 +117,48 @@ static ssize_t wave_mode_store(struct device *dev, struct device_attribute *attr
 	mutex_unlock(&laptop->lock);
 	return count;
 }
+static ssize_t spectrum_mode_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
+	return count;
+}
+static ssize_t reactive_mode_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
+	return count;
+}
+static ssize_t breath_mode_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
+	return count;
+}
+static ssize_t static_mode_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
+	return count;
+}
 
+/**
+ * Called on reading fan_rpm sysfs entry
+ */
+static ssize_t fan_rpm_show(struct device *dev, struct device_attribute *attr,
+			    char *buf)
+{
+	struct razer_laptop *laptop = dev_get_drvdata(dev);
+
+	if (laptop->fan_rpm == 0)
+		return sprintf(buf, "%s", "Automatic (0)\n");
+
+	return sprintf(buf, "%d RPM\n", laptop->fan_rpm);
+}
+
+/**
+ * Called on reading power_mode sysfs entry
+ */
+static ssize_t power_mode_show(struct device *dev,
+			       struct device_attribute *attr, char *buf)
+{
+	struct razer_laptop *laptop = dev_get_drvdata(dev);
+
+	if (laptop->gaming_mode == 0)
+		return sprintf(buf, "%s", "Balanced (0)\n");
+	else if (laptop->gaming_mode == 1)
+		return sprintf(buf, "%s", "Gaming (1)\n");
+
+	return sprintf(buf, "%s", "Creator (2)\n");
+}
 
 static ssize_t fan_rpm_store(struct device *dev, struct device_attribute *attr,
 			     const char *buf, size_t count)
@@ -360,6 +326,10 @@ static ssize_t power_mode_store(struct device *dev,
 static DEVICE_ATTR_RW(fan_rpm);
 static DEVICE_ATTR_RW(power_mode);
 static DEVICE_ATTR_WO(wave_mode);
+static DEVICE_ATTR_WO(spectrum_mode);
+static DEVICE_ATTR_WO(reactive_mode);
+static DEVICE_ATTR_WO(breath_mode);
+static DEVICE_ATTR_WO(static_mode);
 
 // Called on load module
 static int razer_laptop_probe(struct hid_device *hdev,
@@ -390,7 +360,10 @@ static int razer_laptop_probe(struct hid_device *hdev,
 	device_create_file(&hdev->dev, &dev_attr_fan_rpm);
 	device_create_file(&hdev->dev, &dev_attr_power_mode);
 	device_create_file(&hdev->dev, &dev_attr_wave_mode);
-
+	device_create_file(&hdev->dev, &dev_attr_static_mode);
+	device_create_file(&hdev->dev, &dev_attr_reactive_mode);
+	device_create_file(&hdev->dev, &dev_attr_spectrum_mode);
+	device_create_file(&hdev->dev, &dev_attr_breath_mode);
 	hid_set_drvdata(hdev, dev);
 	if (hid_parse(hdev)) {
 		hid_err(hdev, "Failed to parse device!\n");
@@ -415,8 +388,10 @@ static void razer_laptop_remove(struct hid_device *hdev)
 	dev = hid_get_drvdata(hdev);
 	device_remove_file(&hdev->dev, &dev_attr_fan_rpm);
 	device_remove_file(&hdev->dev, &dev_attr_power_mode);
-	device_remove_file(&hdev->dev, &dev_attr_wave_mode);
-
+	device_remove_file(&hdev->dev, &dev_attr_static_mode);
+	device_remove_file(&hdev->dev, &dev_attr_reactive_mode);
+	device_remove_file(&hdev->dev, &dev_attr_spectrum_mode);
+	device_remove_file(&hdev->dev, &dev_attr_breath_mode);
 	hid_hw_stop(hdev);
 	kfree(dev);
 	dev_info(&intf->dev, "Razer_laptop_control: Unloaded\n");
