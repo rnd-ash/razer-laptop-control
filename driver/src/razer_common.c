@@ -144,6 +144,8 @@ static ssize_t fan_rpm_store(struct device *dev, struct device_attribute *attr,
 	__u8 request_fan_speed;
 	char buffer[90];
 
+	mutex_lock(&laptop->lock);
+
 	memset(buffer, 0x00, sizeof(buffer));
 	if (kstrtol(buf, 10, &x)) { // Convert users input to integer
 		dev_warn(dev, "User entered an invalid input for fan rpm. Defaulting to auto");
@@ -226,6 +228,7 @@ static ssize_t fan_rpm_store(struct device *dev, struct device_attribute *attr,
 		buffer[11] = 0x00;
 		send_payload(laptop->usb_dev, buffer, 0, 0);
 	}
+	mutex_unlock(&laptop->lock);
 	return count;
 }
 
@@ -244,7 +247,10 @@ static ssize_t power_mode_store(struct device *dev,
 				const char *buf, size_t count)
 {
 	struct razer_laptop *laptop = dev_get_drvdata(dev);
+	ssize_t retval = count;
 	unsigned long x;
+
+	mutex_lock(&laptop->lock);
 
 	if (kstrtol(buf, 10, &x)) {
 		dev_warn(dev,
@@ -283,11 +289,13 @@ static ssize_t power_mode_store(struct device *dev,
 		buffer[10] = laptop->gaming_mode;
 		buffer[11] = laptop->fan_rpm != 0 ? 0x01 : 0x00;
 		send_payload(laptop->usb_dev, buffer, 0, 0);
-		return count;
 	} else {
-		return -EINVAL;
+		retval = -EINVAL;
 	}
-	return count;
+
+	mutex_unlock(&laptop->lock);
+
+	return retval;
 }
 
 // Set our device attributes in sysfs
