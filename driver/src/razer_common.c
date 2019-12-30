@@ -63,8 +63,8 @@ struct razer_laptop {
 /**
  * Called on reading fan_rpm sysfs entry
  */
-static ssize_t get_fan_rpm(struct device *dev, struct device_attribute *attr,
-			   char *buf)
+static ssize_t fan_rpm_show(struct device *dev, struct device_attribute *attr,
+			    char *buf)
 {
 	struct razer_laptop *laptop = dev_get_drvdata(dev);
 
@@ -77,8 +77,8 @@ static ssize_t get_fan_rpm(struct device *dev, struct device_attribute *attr,
 /**
  * Called on reading power_mode sysfs entry
  */
-static ssize_t get_performance_mode(struct device *dev,
-				    struct device_attribute *attr, char *buf)
+static ssize_t power_mode_show(struct device *dev,
+			       struct device_attribute *attr, char *buf)
 {
 	struct razer_laptop *laptop = dev_get_drvdata(dev);
 
@@ -136,8 +136,8 @@ static int send_payload(struct usb_device *usb_dev, char *buffer,
 	return 0;
 }
 
-static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr,
-			   const char *buf, size_t count)
+static ssize_t fan_rpm_store(struct device *dev, struct device_attribute *attr,
+			     const char *buf, size_t count)
 {
 	struct razer_laptop *laptop = dev_get_drvdata(dev);
 	unsigned long x;
@@ -239,9 +239,9 @@ static ssize_t set_fan_rpm(struct device *dev, struct device_attribute *attr,
  * have to send the current fan control state as well within the message
  *
  */
-static ssize_t set_performance_mode(struct device *dev,
-				    struct device_attribute *attr,
-				    const char *buf, size_t count)
+static ssize_t power_mode_store(struct device *dev,
+				struct device_attribute *attr,
+				const char *buf, size_t count)
 {
 	struct razer_laptop *laptop = dev_get_drvdata(dev);
 	unsigned long x;
@@ -291,8 +291,8 @@ static ssize_t set_performance_mode(struct device *dev,
 }
 
 // Set our device attributes in sysfs
-static DEVICE_ATTR(fan_rpm, 0664, get_fan_rpm, set_fan_rpm);
-static DEVICE_ATTR(power_mode, 0664, get_performance_mode, set_performance_mode);
+static DEVICE_ATTR_RW(fan_rpm);
+static DEVICE_ATTR_RW(power_mode);
 
 // Called on load module
 static int razer_laptop_probe(struct hid_device *hdev,
