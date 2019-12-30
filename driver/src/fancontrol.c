@@ -1,7 +1,16 @@
 // SPDX-License-Identifier: GPL-2.0
 #include "fancontrol.h"
 
-int get_max_fan_rpm(__u32 product_id)
+/*
+ * Returns the highest valid fan RPM for manual fan control
+ *
+ * We could through a higher value at the EC, it may even accept it which would
+ * be dangerous, so limit it to what we know is safe based on using Synapse.
+ *
+ * Each model of Blade seems to have a different upper limit, so we require the
+ * product ID to set the correct upper bound
+ */
+static int get_max_fan_rpm(__u32 product_id)
 {
 	switch (product_id) {
 	case BLADE_2018_ADV:
