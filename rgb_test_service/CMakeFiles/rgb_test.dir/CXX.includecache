@@ -1,0 +1,34 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/ashcon/code/razer-laptop-control/rgb_test_service/src/main.cpp
+stdlib.h
+-
+iostream
+-
+filesystem
+-
+unistd.h
+-
+power_fan_control.hpp
+/home/ashcon/code/razer-laptop-control/rgb_test_service/src/power_fan_control.hpp
+
+/home/ashcon/code/razer-laptop-control/rgb_test_service/src/power_fan_control.cpp
+power_fan_control.hpp
+/home/ashcon/code/razer-laptop-control/rgb_test_service/src/power_fan_control.hpp
+
+/home/ashcon/code/razer-laptop-control/rgb_test_service/src/power_fan_control.hpp
+filesystem
+-
+iostream
+-
+fstream
+-
+string.h
+-
+

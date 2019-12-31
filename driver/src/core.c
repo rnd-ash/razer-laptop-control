@@ -1,6 +1,45 @@
 // SPDX-License-Identifier: GPL-2.0
-
 #include "core.h"
+
+
+/**
+ * Returns a pointer to string of the product name of the device
+ */
+char *getDeviceDescription(int product_id)
+{
+	switch (product_id) {
+	case BLADE_2016_END:
+		return "Blade 15 late 2016";
+	case BLADE_2018_BASE:
+		return "Blade 15 2018 Base";
+	case BLADE_2018_ADV:
+		return "Blade 15 2018 Advanced";
+	case BLADE_2018_MERC:
+		return "Blade 15 2018 Mercury Edition";
+	case BLADE_2018_PRO_FHD:
+		return "Blade pro 2018 FHD";
+	case BLADE_2019_ADV:
+		return "Blade 15 2019 Advanced";
+	case BLADE_2019_MERC:
+		return "Blade 15 2019 Mercury Edition";
+	case BLADE_2019_STEALTH:
+		return "Blade 2019 Stealth";
+	case BLADE_PRO_2019:
+		return "Blade pro 2019";
+	case BLADE_2016_PRO:
+		return "Blade pro 2016";
+	case BLADE_2017_PRO:
+		return "Blade peo 2017";
+	case BLADE_2017_STEALTH_END:
+		return "Blade Stealth late 2017";
+	case BLADE_2017_STEALTH_MID:
+		return "Blade Stealth mid 2017";
+	case BLADE_QHD:
+		return "Blade QHD";
+	default:
+		return "UNKNOWN";
+	}
+}
 
 /**
  * Sends payload to the EC controller

@@ -7,6 +7,7 @@
 #include "fancontrol.h"
 #include "defines.h"
 #include "core.h"
+#include "chroma.h"
 
 
 MODULE_AUTHOR("Ashcon Mohseninia");
@@ -15,130 +16,46 @@ MODULE_LICENSE("GPL");
 MODULE_VERSION("0.0.1");
 
 /**
- * Returns a pointer to string of the product name of the device
+ * Function to send RGB data to keyboard to display
+ * The keyboard is designed as a matrix with 6 rows (below is outline of my UK keyboard):
+ * 
+ *  Row 0: ESC - DEL 
+ * 	Row 1: ` - BACKSPACE
+ *  Row 2: TAB - ENTER
+ *  Row 3: CAPS - #
+ *  Row 4: SHIFT - SHIFT
+ *  Row 5: CTRL - FN
+ * 
+ * This function takes RGB data and sends it to each row in the keyboard.
+ * We expect 360 bytes (4 bytes per key), send in order row 0, key 0 to row 5, key 14.
  */
-static char *getDeviceDescription(int product_id)
-{
-	switch (product_id) {
-	case BLADE_2016_END:
-		return "Blade 15 late 2016";
-	case BLADE_2018_BASE:
-		return "Blade 15 2018 Base";
-	case BLADE_2018_ADV:
-		return "Blade 15 2018 Advanced";
-	case BLADE_2018_MERC:
-		return "Blade 15 2018 Mercury Edition";
-	case BLADE_2018_PRO_FHD:
-		return "Blade pro 2018 FHD";
-	case BLADE_2019_ADV:
-		return "Blade 15 2019 Advanced";
-	case BLADE_2019_MERC:
-		return "Blade 15 2019 Mercury Edition";
-	case BLADE_2019_STEALTH:
-		return "Blade 2019 Stealth";
-	case BLADE_PRO_2019:
-		return "Blade pro 2019";
-	case BLADE_2016_PRO:
-		return "Blade pro 2016";
-	case BLADE_2017_PRO:
-		return "Blade peo 2017";
-	case BLADE_2017_STEALTH_END:
-		return "Blade Stealth late 2017";
-	case BLADE_2017_STEALTH_MID:
-		return "Blade Stealth mid 2017";
-	case BLADE_QHD:
-		return "Blade QHD";
-	default:
-		return "UNKNOWN";
-	}
-}
-struct key_colour {
-	__u8 r;
-	__u8 g;
-	__u8 b;
-};
-
-struct key_row {
-	__u8 __res;
-	__u8 id;
-	__u8 __res1[3];
-	__u8 cmd_id;
-	__u8 sub_cmd;
-	__u8 sub_cmd_id;
-	__u8 unk1;
-	__u8 row_id;
-	__u8 __res4;
-	__u8 unk2;
-	__u8 __res6[3];
-	struct key_colour key_data[15];
-};
-
-// Struct to hold some basic data about the laptops current state
-struct razer_laptop {
-	int product_id;			// Product ID
-	struct usb_device *usb_dev;	// USB Device we wish to talk to
-	struct mutex lock;		// Mutex
-	int fan_rpm;			// Fan RPM of manual mod (0 = AUTO)
-	int gaming_mode;		// Gaming mode (0 = Balanced) (1 = Gaming AKA Higher CPU TDP)
-};
-
-static ssize_t static_mode_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
-	dev_info(dev,"Test");
-	struct razer_laptop *laptop = dev_get_drvdata(dev);
-	struct key_row rows[6];
-	memset(rows, 0x00, sizeof(rows));
-	unsigned char tmp[90];
+static ssize_t rgb_map_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
+	struct razer_laptop *laptop;
 	int i;
-	for (i = 0; i < 6; i++) {
-		dev_info(dev, "Building\n");
-		memset(tmp, 0x00, sizeof(tmp));
-		rows[i].id = 0x1f;
-		rows[i].cmd_id = 0x34;
-		rows[i].sub_cmd = 0x03;
-		rows[i].sub_cmd_id = 0x0b;
-		rows[i].row_id = i;
-		rows[i].unk1 = 0xff;
-		rows[i].unk2 = 0x0f;
-		int x;
-		for (x = 0; x < 15; x+=3) {
-			rows[i].key_data[x].r = 255;
-			rows[i].key_data[x+1].g = 255;
-			rows[i].key_data[x+2].b = 255;
+	laptop = dev_get_drvdata(dev);
+	if (count != 360) {
+		dev_err(dev, "RGB Map expects 360 bytes. Got %ld Bytes", count);
+		//mutex_lock(&laptop->lock);
+		for (i = 0; i <= 5; i++) {
+			char bytes[60];
+			memset(bytes, 0x11, sizeof(bytes));
+			dev_info(dev, "Sending");
+			sendRowDataToProfile(laptop->usb_dev, i, bytes);
 		}
-		memcpy(tmp, &rows[i], 90);
-		dev_info(dev, "Sending\n");
+		displayProfile(laptop->usb_dev, 0);
+		//return -EINVAL;
+	} else {
 		mutex_lock(&laptop->lock);
-		send_payload(laptop->usb_dev, tmp, 1000, 1000);
-		mutex_unlock(&laptop->lock);
-		
+		for (i = 0; i <= 5; i++) {
+			char bytes[60];
+			memset(bytes, buf[60*i], 60);
+			dev_info(dev, "Sending");
+			sendRowDataToProfile(laptop->usb_dev, i, bytes);
+		}
+		displayProfile(laptop->usb_dev, 0);
 	}
-	char buffer2[90];
-	mutex_lock(&laptop->lock);
-	memset(buffer2, 0x00, sizeof(buffer2));
-	buffer2[0] = 0x00;
-	buffer2[1] = 0x1f;
-	buffer2[2] = 0x00;
-	buffer2[3] = 0x00;
-	buffer2[4] = 0x00;
-	buffer2[5] = 0x02;
-	buffer2[6] = 0x03;
-	buffer2[7] = 0x0a;
-	buffer2[8] = 0x05;
-	buffer2[9] = 0x00;
-	send_payload(laptop->usb_dev, buffer2, 1000, 1000);
+	displayProfile(laptop->usb_dev, 0);
 	mutex_unlock(&laptop->lock);
-	return count;
-}
-static ssize_t spectrum_mode_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
-	return count;
-}
-static ssize_t reactive_mode_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
-	return count;
-}
-static ssize_t breath_mode_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
-	return count;
-}
-static ssize_t wave_mode_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
 	return count;
 }
 
@@ -337,11 +254,7 @@ static ssize_t power_mode_store(struct device *dev,
 // Set our device attributes in sysfs
 static DEVICE_ATTR_RW(fan_rpm);
 static DEVICE_ATTR_RW(power_mode);
-static DEVICE_ATTR_WO(wave_mode);
-static DEVICE_ATTR_WO(spectrum_mode);
-static DEVICE_ATTR_WO(reactive_mode);
-static DEVICE_ATTR_WO(breath_mode);
-static DEVICE_ATTR_WO(static_mode);
+static DEVICE_ATTR_WO(rgb_map);
 
 // Called on load module
 static int razer_laptop_probe(struct hid_device *hdev,
@@ -371,11 +284,7 @@ static int razer_laptop_probe(struct hid_device *hdev,
 		 getDeviceDescription(dev->product_id));
 	device_create_file(&hdev->dev, &dev_attr_fan_rpm);
 	device_create_file(&hdev->dev, &dev_attr_power_mode);
-	device_create_file(&hdev->dev, &dev_attr_wave_mode);
-	device_create_file(&hdev->dev, &dev_attr_static_mode);
-	device_create_file(&hdev->dev, &dev_attr_reactive_mode);
-	device_create_file(&hdev->dev, &dev_attr_spectrum_mode);
-	device_create_file(&hdev->dev, &dev_attr_breath_mode);
+	device_create_file(&hdev->dev, &dev_attr_rgb_map);
 	hid_set_drvdata(hdev, dev);
 	if (hid_parse(hdev)) {
 		hid_err(hdev, "Failed to parse device!\n");
@@ -400,10 +309,7 @@ static void razer_laptop_remove(struct hid_device *hdev)
 	dev = hid_get_drvdata(hdev);
 	device_remove_file(&hdev->dev, &dev_attr_fan_rpm);
 	device_remove_file(&hdev->dev, &dev_attr_power_mode);
-	device_remove_file(&hdev->dev, &dev_attr_static_mode);
-	device_remove_file(&hdev->dev, &dev_attr_reactive_mode);
-	device_remove_file(&hdev->dev, &dev_attr_spectrum_mode);
-	device_remove_file(&hdev->dev, &dev_attr_breath_mode);
+	device_remove_file(&hdev->dev, &dev_attr_rgb_map);
 	hid_hw_stop(hdev);
 	kfree(dev);
 	dev_info(&intf->dev, "Razer_laptop_control: Unloaded\n");

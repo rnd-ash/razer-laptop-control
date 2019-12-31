@@ -1,0 +1,1 @@
+/usr/bin/c++    -rdynamic CMakeFiles/rgb_test.dir/src/main.cpp.o CMakeFiles/rgb_test.dir/src/power_fan_control.cpp.o CMakeFiles/rgb_test.dir/src/keyboard.cpp.o  -o rgb_test 
