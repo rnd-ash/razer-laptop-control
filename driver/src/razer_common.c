@@ -31,32 +31,22 @@ MODULE_VERSION("0.0.1");
  */
 static ssize_t rgb_map_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
 	struct razer_laptop *laptop;
-	int i;
 	laptop = dev_get_drvdata(dev);
 	if (count != 360) {
 		dev_err(dev, "RGB Map expects 360 bytes. Got %ld Bytes", count);
-		//mutex_lock(&laptop->lock);
-		for (i = 0; i <= 5; i++) {
-			char bytes[60];
-			memset(bytes, 0x11, sizeof(bytes));
-			dev_info(dev, "Sending");
-			sendRowDataToProfile(laptop->usb_dev, i, bytes);
-		}
-		displayProfile(laptop->usb_dev, 0);
-		//return -EINVAL;
+		return -EINVAL;
 	} else {
+		int i;
 		mutex_lock(&laptop->lock);
 		for (i = 0; i <= 5; i++) {
 			char bytes[60];
-			memset(bytes, buf[60*i], 60);
-			dev_info(dev, "Sending");
+			memcpy(&bytes[0], &buf[i*60] ,60);
 			sendRowDataToProfile(laptop->usb_dev, i, bytes);
 		}
 		displayProfile(laptop->usb_dev, 0);
+		mutex_unlock(&laptop->lock);
+		return count;
 	}
-	displayProfile(laptop->usb_dev, 0);
-	mutex_unlock(&laptop->lock);
-	return count;
 }
 
 /**

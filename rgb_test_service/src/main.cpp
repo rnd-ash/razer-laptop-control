@@ -3,6 +3,10 @@
 #include <filesystem>
 #include <unistd.h>
 #include "power_fan_control.hpp"
+#include "keyboard.hpp"
+#include <ctime>
+
+
 #define DRIVER_DIR "/sys/module/razercontrol/drivers/hid:Razer laptop System control driver"
 
 namespace fs = std::filesystem;
@@ -60,5 +64,45 @@ int main(int argc, char *argv[]) {
             power_control(sysfs_path).setPowerMode(power_mode);
         }
     }
+    #define SLEEP_MICRO 0 // 30fps
+    keyboard k = keyboard(sysfs_path);
+
+    // Test rate which we can hammer the keyboard
+    clock_t begin = clock();
+
+
+    for (int i = 0; i < 255; i+=5) {
+        k.setColour(i, 0, 0, 255);
+        usleep(SLEEP_MICRO);
+    }
+    for (int i = 0; i < 255; i+=5) {
+        k.setColour(255, i, 0, 255);
+        usleep(SLEEP_MICRO);
+    }
+    for (int i = 0; i < 255; i+=5) {
+        k.setColour(255, 255, i, 255);
+        usleep(SLEEP_MICRO);
+    }
+
+
+    for (int i = 255; i >= 0; i-=5) {
+        k.setColour(i, 255, 255, 255);
+        usleep(SLEEP_MICRO);
+    }
+    for (int i = 255; i >= 0; i-=5) {
+        k.setColour(0, i, 255, 255);
+        usleep(SLEEP_MICRO);
+    }
+    for (int i = 255; i >= 0; i-=5) {
+        k.setColour(0, 0, i, 255);
+        usleep(SLEEP_MICRO);
+    }
+    clock_t end = clock();
+
+    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+
+    int fps = 306.0 / elapsed_secs;
+    std::cout << "fps: " << fps << std::endl;
+
     return 0;
 }

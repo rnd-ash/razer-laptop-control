@@ -4,6 +4,7 @@
 CMakeFiles/rgb_test.dir/src/keyboard.cpp.o: src/keyboard.cpp
 CMakeFiles/rgb_test.dir/src/keyboard.cpp.o: src/keyboard.hpp
 
+CMakeFiles/rgb_test.dir/src/main.cpp.o: src/keyboard.hpp
 CMakeFiles/rgb_test.dir/src/main.cpp.o: src/main.cpp
 CMakeFiles/rgb_test.dir/src/main.cpp.o: src/power_fan_control.hpp
 
