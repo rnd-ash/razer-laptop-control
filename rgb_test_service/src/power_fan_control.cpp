@@ -27,7 +27,6 @@ power_control::power_control(std::filesystem::path p) {
 void power_control::setPowerMode(int mode) {
     std::ofstream file;
     file.open(path);
-    std::cout<< path << std::endl;
     file << std::to_string(mode);
     file.close();
 }
