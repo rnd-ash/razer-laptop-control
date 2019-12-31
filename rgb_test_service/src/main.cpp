@@ -34,12 +34,11 @@ int main(int argc, char *argv[]) {
     for(auto& p: fs::directory_iterator(DRIVER_DIR)) {
         if (p.is_directory()) {
             fs::path x = p.path();
-            x.append("fan_rpm")) {
-                if (x.exists()) {
-                    std::cout << p.path() << std::endl;
-                    sysfs_path = p.path();
-                }
-            };
+            x.append("fan_rpm");
+            if (fs::exists(x)) {
+                std::cout << p.path() << std::endl;
+                sysfs_path = p.path();
+            }
             //break;
         }
     }
