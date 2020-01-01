@@ -76,23 +76,9 @@ int main(int argc, char *argv[]) {
 
     
     EFFECT e = EFFECT(&k);
-    for (int i = 0; i < 5000/MAX_UPDATE_INTERVAL_MS; i++) {
-        e.updateTickDemo1();
-        usleep(MAX_UPDATE_INTERVAL_MS * 1000);
-    }
-    k.matrix->clearColours();
-    k.update();
-    sleep(1);
-    for (int i = 0; i < 5000/MAX_UPDATE_INTERVAL_MS; i++) {
-        e.updateTickDemo2();
-        usleep(MAX_UPDATE_INTERVAL_MS * 1000);
-    }
-    k.matrix->clearColours();
-    k.update();
-    sleep(1);
-    for (int i = 0; i < 5000/MAX_UPDATE_INTERVAL_MS; i++) {
-        e.updateTickDemo3();
-        usleep(MAX_UPDATE_INTERVAL_MS * 1000);
+    for (int i = 0; i < 500000/MAX_UPDATE_INTERVAL_MS; i++) {
+        e.startLightTick();
+        usleep(MAX_UPDATE_INTERVAL_MS);
     }
     k.matrix->setAllColour({0xFF, 0xFF, 0xFF});
     k.update();

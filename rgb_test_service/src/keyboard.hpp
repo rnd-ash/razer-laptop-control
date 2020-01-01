@@ -15,6 +15,12 @@
  * Key colour data
  */
 struct colour {
+    int red;
+    int green;
+    int blue;
+};
+
+struct colour_clamped {
     __uint8_t red;
     __uint8_t green;
     __uint8_t blue;
@@ -29,8 +35,9 @@ class key_matrix {
         void clearColours();
         char * toRGBData();
     private:
+        colour_clamped getClamped(colour c);
         char buffer[360]; // To write to driver
-        struct colour map[MATRIX_HEIGHT][MATRIX_WIDTH]; // 6 rows, 15 columns
+        struct colour_clamped map[MATRIX_HEIGHT][MATRIX_WIDTH]; // 6 rows, 15 columns
 };
 
 class keyboard {
