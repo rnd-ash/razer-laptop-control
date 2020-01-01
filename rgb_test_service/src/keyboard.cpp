@@ -1,21 +1,58 @@
 #include "keyboard.hpp"
-keyboard::keyboard(std::filesystem::path p) {
-    path = p.append("rgb_map");
-    std::cout << path << std::endl;
-}
-void keyboard::setEffect(effect e) {
 
+keyboard::keyboard(std::filesystem::path p) {
+    path_all = p.append("rgb_map");
+    struct colour c;
+    c.blue = 255;
+    c.green = 255;
+    c.red = 255;
+    matrix = new key_matrix();
 }
-void keyboard::setColour(__uint8_t r, __uint8_t g, __uint8_t b, __uint8_t brightness) {
+
+void keyboard::update() {
     std::ofstream file;
-    char buffer[360];
-    for (int i = 0; i < 360; i+=4) {
-        buffer[i] = r;
-        buffer[i+1] = g;
-        buffer[i+2] = b;
-        buffer[i+3] = brightness;
-    }
-    file.open(path);
-    file.write(buffer, 360);
+    file.open(path_all);
+    file.write(this->matrix->toRGBData(), 360);
     file.close();
+}
+
+void key_matrix::setKeyColour(__uint8_t keyX, __uint8_t keyY, struct colour c) {
+    map[keyY][keyX] = c;
+}
+
+void key_matrix::setRowColour(__uint8_t row, struct colour c) {
+    for (int i = 0; i < 15; i++) {
+        map[row][i] = c;
+    }
+}
+void key_matrix::setColumnColour(__uint8_t col, struct colour c) {
+    for (int i = 0; i < 6; i++) {
+        map[i][col] = c;
+    }
+}
+
+void key_matrix::setAllColour(struct colour c){
+    for (int y = 0; y < 6; y++) {
+        for (int x = 0; x < 15; x++) {
+            map[y][x] = c;
+        }
+    }
+}
+
+void key_matrix::clearColours() {
+    memset(map, 0x00, sizeof(map));
+}
+
+char * key_matrix::toRGBData() {
+    int pos = 0;
+    for (int y = 0; y < 6; y++) {
+        for (int x = 0; x < 15; x++) {
+            buffer[pos  ] = map[y][x].red;
+            buffer[pos+1] = map[y][x].green;
+            buffer[pos+2] = map[y][x].blue;
+            buffer[pos+3] = 0xFF;
+            pos +=4;
+        }
+    }
+    return buffer; 
 }

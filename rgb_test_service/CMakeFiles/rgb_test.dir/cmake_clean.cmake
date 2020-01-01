@@ -1,4 +1,5 @@
 file(REMOVE_RECURSE
+  "CMakeFiles/rgb_test.dir/src/effects.cpp.o"
   "CMakeFiles/rgb_test.dir/src/keyboard.cpp.o"
   "CMakeFiles/rgb_test.dir/src/main.cpp.o"
   "CMakeFiles/rgb_test.dir/src/power_fan_control.cpp.o"

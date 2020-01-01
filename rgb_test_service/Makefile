@@ -520,6 +520,33 @@ ContinuousConfigure/fast:
 	$(MAKE) -f CMakeFiles/ContinuousConfigure.dir/build.make CMakeFiles/ContinuousConfigure.dir/build
 .PHONY : ContinuousConfigure/fast
 
+src/effects.o: src/effects.cpp.o
+
+.PHONY : src/effects.o
+
+# target to build an object file
+src/effects.cpp.o:
+	$(MAKE) -f CMakeFiles/rgb_test.dir/build.make CMakeFiles/rgb_test.dir/src/effects.cpp.o
+.PHONY : src/effects.cpp.o
+
+src/effects.i: src/effects.cpp.i
+
+.PHONY : src/effects.i
+
+# target to preprocess a source file
+src/effects.cpp.i:
+	$(MAKE) -f CMakeFiles/rgb_test.dir/build.make CMakeFiles/rgb_test.dir/src/effects.cpp.i
+.PHONY : src/effects.cpp.i
+
+src/effects.s: src/effects.cpp.s
+
+.PHONY : src/effects.s
+
+# target to generate assembly for a file
+src/effects.cpp.s:
+	$(MAKE) -f CMakeFiles/rgb_test.dir/build.make CMakeFiles/rgb_test.dir/src/effects.cpp.s
+.PHONY : src/effects.cpp.s
+
 src/keyboard.o: src/keyboard.cpp.o
 
 .PHONY : src/keyboard.o
@@ -641,6 +668,9 @@ help:
 	@echo "... NightlyCoverage"
 	@echo "... ExperimentalUpdate"
 	@echo "... ContinuousConfigure"
+	@echo "... src/effects.o"
+	@echo "... src/effects.i"
+	@echo "... src/effects.s"
 	@echo "... src/keyboard.o"
 	@echo "... src/keyboard.i"
 	@echo "... src/keyboard.s"

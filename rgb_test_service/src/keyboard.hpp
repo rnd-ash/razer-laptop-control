@@ -1,28 +1,44 @@
+#ifndef KEYBOARD_H_
+#define KEYBOARD_H_
+
 #include <filesystem>
 #include <iostream>
 #include <fstream>
 #include <string.h>
 
-class key {
-    
+#define ANIMATION_FPS 25 // LOCKED. Any more and keyboard will struggle to update!
+
+#define MATRIX_HEIGHT 6
+#define MATRIX_WIDTH 15
+
+/**
+ * Key colour data
+ */
+struct colour {
+    __uint8_t red;
+    __uint8_t green;
+    __uint8_t blue;
 };
 
-class key_row {
+class key_matrix {
+    public:
+        void setKeyColour(__uint8_t keyX, __uint8_t keyY, struct colour c);
+        void setRowColour(__uint8_t row, struct colour c);
+        void setColumnColour(__uint8_t col, struct colour c);
+        void setAllColour(struct colour c);
+        void clearColours();
+        char * toRGBData();
     private:
-        key keys[15];
+        char buffer[360]; // To write to driver
+        struct colour map[MATRIX_HEIGHT][MATRIX_WIDTH]; // 6 rows, 15 columns
 };
-
-class effect {
-
-};
-
 
 class keyboard {
     public:
         keyboard(std::filesystem::path p);
-        void setEffect(effect e);
-        void setColour(__uint8_t r, __uint8_t g, __uint8_t b, __uint8_t brightness);
+        void update();
+        key_matrix *matrix;
     private:
-        std::filesystem::path path;
-        key_row rows[6];
+        std::filesystem::path path_all;
 };
+#endif

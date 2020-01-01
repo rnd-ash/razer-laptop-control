@@ -6,6 +6,10 @@
 
 #IncludeRegexTransform: 
 
+/home/ashcon/code/razer-laptop-control/rgb_test_service/src/effects.h
+keyboard.hpp
+/home/ashcon/code/razer-laptop-control/rgb_test_service/src/keyboard.hpp
+
 /home/ashcon/code/razer-laptop-control/rgb_test_service/src/keyboard.hpp
 filesystem
 -
@@ -29,6 +33,8 @@ power_fan_control.hpp
 /home/ashcon/code/razer-laptop-control/rgb_test_service/src/power_fan_control.hpp
 keyboard.hpp
 /home/ashcon/code/razer-laptop-control/rgb_test_service/src/keyboard.hpp
+effects.h
+/home/ashcon/code/razer-laptop-control/rgb_test_service/src/effects.h
 ctime
 -
 

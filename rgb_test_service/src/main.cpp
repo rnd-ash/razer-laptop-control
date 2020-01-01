@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include "power_fan_control.hpp"
 #include "keyboard.hpp"
+#include "effects.h"
 #include <ctime>
 
 
@@ -23,6 +24,7 @@ void help() {
 
 fs::path sysfs_path;
 int main(int argc, char *argv[]) {
+    srand(time(0));
     if (!fs::exists(DRIVER_DIR)) {
         std::cout << "Razercontrol module is not loaded!\n";
         return 1;
@@ -72,42 +74,27 @@ int main(int argc, char *argv[]) {
     #define SLEEP_MICRO 0 // 30fps
     keyboard k = keyboard(sysfs_path);
 
-    // Test rate which we can hammer the keyboard
-    clock_t begin = clock();
-
-
-    for (int i = 0; i < 255; i+=5) {
-        k.setColour(i, 0, 0, 255);
-        usleep(SLEEP_MICRO);
+    
+    EFFECT e = EFFECT(&k);
+    for (int i = 0; i < 5000/MAX_UPDATE_INTERVAL_MS; i++) {
+        e.updateTickDemo1();
+        usleep(MAX_UPDATE_INTERVAL_MS * 1000);
     }
-    for (int i = 0; i < 255; i+=5) {
-        k.setColour(255, i, 0, 255);
-        usleep(SLEEP_MICRO);
+    k.matrix->clearColours();
+    k.update();
+    sleep(1);
+    for (int i = 0; i < 5000/MAX_UPDATE_INTERVAL_MS; i++) {
+        e.updateTickDemo2();
+        usleep(MAX_UPDATE_INTERVAL_MS * 1000);
     }
-    for (int i = 0; i < 255; i+=5) {
-        k.setColour(255, 255, i, 255);
-        usleep(SLEEP_MICRO);
+    k.matrix->clearColours();
+    k.update();
+    sleep(1);
+    for (int i = 0; i < 5000/MAX_UPDATE_INTERVAL_MS; i++) {
+        e.updateTickDemo3();
+        usleep(MAX_UPDATE_INTERVAL_MS * 1000);
     }
-
-
-    for (int i = 255; i >= 0; i-=5) {
-        k.setColour(i, 255, 255, 255);
-        usleep(SLEEP_MICRO);
-    }
-    for (int i = 255; i >= 0; i-=5) {
-        k.setColour(0, i, 255, 255);
-        usleep(SLEEP_MICRO);
-    }
-    for (int i = 255; i >= 0; i-=5) {
-        k.setColour(0, 0, i, 255);
-        usleep(SLEEP_MICRO);
-    }
-    clock_t end = clock();
-
-    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-
-    int fps = 306.0 / elapsed_secs;
-    std::cout << "fps: " << fps << std::endl;
-
+    k.matrix->setAllColour({0xFF, 0xFF, 0xFF});
+    k.update();
     return 0;
 }

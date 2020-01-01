@@ -4,6 +4,7 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
+  "/home/ashcon/code/razer-laptop-control/rgb_test_service/src/effects.cpp" "/home/ashcon/code/razer-laptop-control/rgb_test_service/CMakeFiles/rgb_test.dir/src/effects.cpp.o"
   "/home/ashcon/code/razer-laptop-control/rgb_test_service/src/keyboard.cpp" "/home/ashcon/code/razer-laptop-control/rgb_test_service/CMakeFiles/rgb_test.dir/src/keyboard.cpp.o"
   "/home/ashcon/code/razer-laptop-control/rgb_test_service/src/main.cpp" "/home/ashcon/code/razer-laptop-control/rgb_test_service/CMakeFiles/rgb_test.dir/src/main.cpp.o"
   "/home/ashcon/code/razer-laptop-control/rgb_test_service/src/power_fan_control.cpp" "/home/ashcon/code/razer-laptop-control/rgb_test_service/CMakeFiles/rgb_test.dir/src/power_fan_control.cpp.o"

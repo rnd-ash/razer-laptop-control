@@ -35,18 +35,36 @@ static ssize_t rgb_map_store(struct device *dev, struct device_attribute *attr, 
 	if (count != 360) {
 		dev_err(dev, "RGB Map expects 360 bytes. Got %ld Bytes", count);
 		return -EINVAL;
-	} else {
-		int i;
-		mutex_lock(&laptop->lock);
-		for (i = 0; i <= 5; i++) {
-			char bytes[60];
-			memcpy(&bytes[0], &buf[i*60] ,60);
-			sendRowDataToProfile(laptop->usb_dev, i, bytes);
-		}
-		displayProfile(laptop->usb_dev, 0);
-		mutex_unlock(&laptop->lock);
-		return count;
 	}
+	int i;
+	mutex_lock(&laptop->lock);
+	for (i = 0; i <= 5; i++) {
+		char bytes[60];
+		memcpy(&bytes[0], &buf[i*60] ,60);
+		sendRowDataToProfile(laptop->usb_dev, i, bytes);
+	}
+	displayProfile(laptop->usb_dev, 0);
+	mutex_unlock(&laptop->lock);
+	return count;
+}
+
+
+static ssize_t rgb_row_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
+	struct razer_laptop *laptop;
+	char bytes[60];
+	laptop = dev_get_drvdata(dev);
+	if (count != 61) {
+		dev_err(dev, "RGB Row expects 60 bytes. Got %ld Bytes", count);
+		return -EINVAL;
+	}
+	mutex_lock(&laptop->lock);
+	memcpy(&bytes[0], &buf[1] ,60);
+	sendRowDataToProfile(laptop->usb_dev, (int) buf[0], bytes);
+	displayProfile(laptop->usb_dev, 0);
+	mutex_unlock(&laptop->lock);
+	
+	
+	return count;
 }
 
 /**
@@ -245,6 +263,7 @@ static ssize_t power_mode_store(struct device *dev,
 static DEVICE_ATTR_RW(fan_rpm);
 static DEVICE_ATTR_RW(power_mode);
 static DEVICE_ATTR_WO(rgb_map);
+static DEVICE_ATTR_WO(rgb_row);
 
 // Called on load module
 static int razer_laptop_probe(struct hid_device *hdev,
@@ -275,6 +294,7 @@ static int razer_laptop_probe(struct hid_device *hdev,
 	device_create_file(&hdev->dev, &dev_attr_fan_rpm);
 	device_create_file(&hdev->dev, &dev_attr_power_mode);
 	device_create_file(&hdev->dev, &dev_attr_rgb_map);
+	device_create_file(&hdev->dev, &dev_attr_rgb_row);
 	hid_set_drvdata(hdev, dev);
 	if (hid_parse(hdev)) {
 		hid_err(hdev, "Failed to parse device!\n");
@@ -300,6 +320,7 @@ static void razer_laptop_remove(struct hid_device *hdev)
 	device_remove_file(&hdev->dev, &dev_attr_fan_rpm);
 	device_remove_file(&hdev->dev, &dev_attr_power_mode);
 	device_remove_file(&hdev->dev, &dev_attr_rgb_map);
+	device_remove_file(&hdev->dev, &dev_attr_rgb_row);
 	hid_hw_stop(hdev);
 	kfree(dev);
 	dev_info(&intf->dev, "Razer_laptop_control: Unloaded\n");

@@ -4,7 +4,7 @@ set(CMAKE_CXX_STANDARD 17)
 include(CTest)
 enable_testing()
 
-add_executable(rgb_test src/main.cpp src/power_fan_control.cpp src/keyboard.cpp)
+add_executable(rgb_test src/main.cpp src/power_fan_control.cpp src/keyboard.cpp src/effects.cpp)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
