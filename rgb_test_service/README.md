@@ -32,7 +32,7 @@ sudo ./rgb_test --power gaming
 Creator mode
 ```
 sudo ./rgb_test --power creator
-
+```
 
 ### RGB Demos
 These are work in progresses, re-writing Razer synapse's effects in C++. Currently, they are limited to a demo only (10 seconds).
@@ -43,7 +43,6 @@ sudo ./rgb_test --rgb_demo starlight
 ```
 
 Wave demo (All 4 directions)
-
 ```
 sudo ./rgb_test --rgb_demo wave
 ```
