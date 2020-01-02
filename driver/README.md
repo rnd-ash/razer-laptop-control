@@ -13,15 +13,21 @@ This is a test driver I wrote in about 20 hours to allow users with Razer laptop
 sudo rmmod razerkbd
 ```
 
-### Build / Install instructions
+### DKMS INSTALL INSTRUCTIONS
 ```
 cd driver
-make
-cd src
-insmod razercontrol.ko
+sudo make driver_dkms
+sudo dkms add -m razercontrol -v 0.0.1
+sudo dkms build -m razercontrol -v 0.0.1
 ```
-
+After this, you MUST Rebuild your initramfs and reboot. The module will now be persistent
 ## OK Driver installed, how do I use this?
+
+**UPDATE. THERE IS NOW A USERSPACE APPLICATION TO DO THIS. SEE THE RGB_TEST_SERVICE FOLDER IN THE REPO**
+
+
+### LEGACY WAY VIA SYSFS
+
 1. CD to the following directry:
 ```
 cd "/sys/module/razercontrol/drivers/hid\:Razer\ System\ control\ driver"
