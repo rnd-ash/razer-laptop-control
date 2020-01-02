@@ -83,7 +83,7 @@ static ssize_t fan_rpm_store(struct device *dev, struct device_attribute *attr,
 {
 	struct razer_laptop *laptop = dev_get_drvdata(dev);
 	unsigned long x;
-	__u8 request_fan_speed;
+	u8 request_fan_speed;
 	char buffer[90];
 
 	mutex_lock(&laptop->lock);
@@ -94,7 +94,7 @@ static ssize_t fan_rpm_store(struct device *dev, struct device_attribute *attr,
 		request_fan_speed = 0;
 	}
 	if (x != 0) {
-		request_fan_speed = clampFanRPM(x, laptop->product_id);
+		request_fan_speed = clamp_fan_rpm(x, laptop->product_id);
 		dev_info(dev, "Requesting MANUAL fan at %d RPM",
 			 ((int) request_fan_speed * 100));
 		laptop->fan_rpm = request_fan_speed * 100;
@@ -205,7 +205,7 @@ static ssize_t power_mode_store(struct device *dev,
 		if (x == 0) {
 			dev_info(dev, "%s", "Enabling Balanced power mode");
 		} else if (x == 2 &&
-			   creatorModeAllowed(laptop->product_id) == 1) {
+			   creator_mode_allowed(laptop->product_id) == 1) {
 			dev_info(dev, "%s", "Enabling Gaming power mode");
 		} else if (x == 1) {
 			dev_info(dev, "%s", "Enabling Gaming power mode");
@@ -285,6 +285,8 @@ static int razer_laptop_probe(struct hid_device *hdev,
 		kfree(dev);
 		return -ENODEV;
 	}
+	dev_info(&intf->dev, "Found supported device: %s\n",
+		 getDeviceDescription(dev->product_id));
 
 	return 0;
 }
