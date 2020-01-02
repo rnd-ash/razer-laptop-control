@@ -48,11 +48,6 @@ int main(int argc, char *argv[]) {
         help();
         return 0;
     }
-    if ((argc-1) % 2 != 0) {
-        help();
-        return 0;
-    }
-
     for (int i = 1; i < argc; i+=2) {
         if (std::string(argv[i]) == "--fan") {
             int rpm = std::atoi(argv[i+1]);
@@ -76,7 +71,35 @@ int main(int argc, char *argv[]) {
                 EFFECT e = EFFECT(&k);
                 for (long i = 0; i < 10000/MAX_UPDATE_INTERVAL_MS; i++) {
                     e.startLightTick();
-                    usleep(MAX_UPDATE_INTERVAL_MS);
+                    usleep(MAX_UPDATE_INTERVAL_MS*1000);
+                }
+            }
+            if (std::string(argv[i+1]) == "wave") {
+                std::cout << "RGB Starlight demo wave 10 seconds" << std::endl;
+                keyboard k = keyboard(sysfs_path);
+                WAVE_EFFECT e = WAVE_EFFECT(&k, 0);
+                std::cout << "LEFT >> RIGHT" << std::endl;
+                for (long i = 0; i < 5000/MAX_UPDATE_INTERVAL_MS; i++) {
+                    e.updateTick();
+                    usleep(MAX_UPDATE_INTERVAL_MS*1000);
+                }
+                e.changeDir(1);
+                std::cout << "RIGHT >> LEFT" << std::endl;
+                for (long i = 0; i < 5000/MAX_UPDATE_INTERVAL_MS; i++) {
+                    e.updateTick();
+                    usleep(MAX_UPDATE_INTERVAL_MS*1000);
+                }
+                e.changeDir(2);
+                std::cout << "DOWN >> UP" << std::endl;
+                for (long i = 0; i < 5000/MAX_UPDATE_INTERVAL_MS; i++) {
+                    e.updateTick();
+                    usleep(MAX_UPDATE_INTERVAL_MS*1000);
+                }
+                e.changeDir(3);
+                std::cout << "UP >> DOWN" << std::endl;
+                for (long i = 0; i < 5000/MAX_UPDATE_INTERVAL_MS; i++) {
+                    e.updateTick();
+                    usleep(MAX_UPDATE_INTERVAL_MS*1000);
                 }
             }
         }

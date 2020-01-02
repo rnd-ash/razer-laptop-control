@@ -108,3 +108,113 @@ void EFFECT::addNewKey() {
     keysToUpdate.push_back(p);
     kboard->matrix->setKeyColour(posx, posy, c);
 }
+
+
+
+
+
+
+
+
+WAVE_EFFECT::WAVE_EFFECT(keyboard *board, int dir) {
+    this->kboard = board;
+    this->current_start = {false, false, false,{0xFF,-255,0x00}};
+    this->updateRows(current_start, 15);
+    this->interval = 256 / 5;
+    this->direction = dir;
+}
+
+void WAVE_EFFECT::updateTick() {
+    this->updateRows(this->current_start, 15);
+}
+
+void WAVE_EFFECT::changeDir(int dir) {
+    this->direction = dir;
+}
+
+void WAVE_EFFECT::updateRows(colour_seq start, int resolution) {
+    bool isUpdateOutput = false;
+    colour_seq current = start;
+    int loop_start;
+    int loop_end;
+    int loop_step;
+    bool horizontal = true;
+    bool currentUpdate = false;
+    switch (this->direction)
+    {
+    case 1:
+        loop_start = 14;
+        loop_end = -1;
+        loop_step = -1;
+        break;
+    case 2:
+        loop_start = 0;
+        loop_end = 6;
+        loop_step = 1;
+        horizontal = false;
+        break;
+    case 3:
+        loop_start = 5;
+        loop_end = -1;
+        loop_step = -1;
+        horizontal = false;
+        break;
+    default:
+        loop_start = 0;
+        loop_end = 15;
+        loop_step = 1;
+        break;
+    }
+    
+    while (loop_start != loop_end) {
+        if (horizontal) {
+            kboard->matrix->setColumnColour(loop_start, current.c);
+        } else {
+            kboard->matrix->setRowColour(loop_start, current.c);
+        }
+
+        if (current.c.blue > 255*2) {
+            current.blueFalling = true;
+        } else if (current.c.blue < -255) {
+            current.blueFalling = false;
+        }
+
+        if (current.blueFalling) {
+            current.c.blue -= this->interval;
+        } else {
+            current.c.blue += this->interval;
+        }
+
+        if (current.c.red > 255*2) {
+            current.redFalling = true;
+        } else if (current.c.red < -255) {
+            current.redFalling = false;
+        }
+
+        if (current.redFalling) {
+            current.c.red -= this->interval;
+        } else {
+            current.c.red += this->interval;
+        }
+
+        if (current.c.green > 255*2) {
+            current.greenFalling = true;
+        } else if (current.c.green < -255) {
+            current.greenFalling = false;
+        }
+
+        if (current.greenFalling) {
+            current.c.green -= this->interval;
+        } else {
+            current.c.green += this->interval;
+        }
+
+        if (!currentUpdate) {
+            this->current_start = current;
+            currentUpdate = true;
+        }
+
+        loop_start += loop_step;
+    }
+    kboard->update();
+}

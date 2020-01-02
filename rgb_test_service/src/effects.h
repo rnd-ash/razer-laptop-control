@@ -34,4 +34,26 @@ class EFFECT {
         void addNewKey();
 };
 
+
+class WAVE_EFFECT {
+    public :
+        WAVE_EFFECT(keyboard *board, int dir);
+        void changeDir(int dir);
+        void updateTick();
+    private:
+
+        struct colour_seq {
+            bool blueFalling;
+            bool redFalling;
+            bool greenFalling;
+            colour c;
+        };
+        colour_seq current_start;
+        keyboard *kboard;
+        unsigned long tick = 0;
+        float interval;
+        int direction;
+        void updateRows(colour_seq start, int resolution);
+};
+
 #endif
