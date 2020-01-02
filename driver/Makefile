@@ -3,7 +3,7 @@ KERNELDIR?=/lib/modules/$(shell uname -r)/build
 DRIVERDIR?=$(shell pwd)/src
 MODULEDIR?=/lib/modules/$(shell uname -r)/kernel/hid
 
-DKMS_NAME?=razer-laptop-driver
+DKMS_NAME?=razercontrol
 DKMS_VER?=0.0.1
 
 MY_CFLAGS += -g -DDEBUG
@@ -23,6 +23,21 @@ debug:
 driver_clean:
 	@echo "Cleaning kernel modules"
 	$(MAKE) -C $(KERNELDIR) M=$(DRIVERDIR) clean
+
+driver_dkms:
+	@echo "Installing kernel modules for DKMS"
+	install -m 644 -v -D Makefile /usr/src/$(DKMS_NAME)-$(DKMS_VER)/Makefile
+	install -m 644 -v -D dkms.conf /usr/src/$(DKMS_NAME)-$(DKMS_VER)/dkms.conf
+	install -m 755 -v -d src /usr/src/$(DKMS_NAME)-$(DKMS_VER)/src
+	install -m 644 -v -D src/*.c /usr/src/$(DKMS_NAME)-$(DKMS_VER)/src/
+	install -m 644 -v -D src/*.h /usr/src/$(DKMS_NAME)-$(DKMS_VER)/src/
+	install -m 644 -v -D src/Makefile /usr/src/$(DKMS_NAME)-$(DKMS_VER)/src/
+	rm -rf /usr/src/$(DKMS_NAME)-$(DKMS_VER)/src/*.mod.c
+
+
+remove_dkms:
+	@echo "Removing dkms module"
+	rm -rf /usr/src/$(DKMS_NAME)_$(DKMS_VER)
 
 clean: driver_clean
 

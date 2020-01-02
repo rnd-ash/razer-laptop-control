@@ -69,18 +69,17 @@ int main(int argc, char *argv[]) {
                 power_mode = 2;
             }
             power_control(sysfs_path).setPowerMode(power_mode);
+        } else if (std::string(argv[i]) == "--rgb_demo") {
+            if (std::string(argv[i+1]) == "starlight") {
+                std::cout << "RGB Starlight demo for 10 seconds" << std::endl;
+                keyboard k = keyboard(sysfs_path);
+                EFFECT e = EFFECT(&k);
+                for (long i = 0; i < 10000/MAX_UPDATE_INTERVAL_MS; i++) {
+                    e.startLightTick();
+                    usleep(MAX_UPDATE_INTERVAL_MS);
+                }
+            }
         }
     }
-    #define SLEEP_MICRO 0 // 30fps
-    keyboard k = keyboard(sysfs_path);
-
-    
-    EFFECT e = EFFECT(&k);
-    for (int i = 0; i < 500000/MAX_UPDATE_INTERVAL_MS; i++) {
-        e.startLightTick();
-        usleep(MAX_UPDATE_INTERVAL_MS);
-    }
-    k.matrix->setAllColour({0xFF, 0xFF, 0xFF});
-    k.update();
     return 0;
 }

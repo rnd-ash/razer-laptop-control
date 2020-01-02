@@ -40,7 +40,7 @@ void EFFECT::updateTickDemo3() {
 }
 #define MAX_TICKS 50
 void EFFECT::startLightTick() {
-    if (tick % MAX_TICKS/50 == 0) {
+    if (tick % 2 == 0) {
         addNewKey();
     }
     // GC tick
@@ -86,20 +86,13 @@ void EFFECT::startLightTick() {
 void EFFECT::addNewKey() {
     int posy = rand() % 6;
     int posx = rand() % 15;
-    
     bool canAdd = false;
-    while(!canAdd) {
-        canAdd = true;
-        for (keyPos i : keysToUpdate) {
-            if (i.x == posx && i.y == posy) {
-                canAdd = false;
-                posx++;
-                posy++;
-            }
+    for (keyPos i : keysToUpdate) {
+        if (i.x == posx && i.y == posy) {
+            return;
         }
     }
-
-    int steps = MAX_TICKS;
+    int steps = 50;
     colour c = {rand() % 256, rand() % 256, rand() % 256};
     struct keyPos p;
     p.x = posx;
