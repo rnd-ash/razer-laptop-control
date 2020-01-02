@@ -6,6 +6,9 @@
 #include <linux/module.h>
 #include "fancontrol.h"
 #include "defines.h"
+#include "core.h"
+#include "chroma.h"
+
 
 MODULE_AUTHOR("Ashcon Mohseninia");
 MODULE_DESCRIPTION("Razer system control driver for laptops");
@@ -13,52 +16,37 @@ MODULE_LICENSE("GPL");
 MODULE_VERSION("0.0.1");
 
 /**
- * Returns a pointer to string of the product name of the device
+ * Function to send RGB data to keyboard to display
+ * The keyboard is designed as a matrix with 6 rows (below is outline of my UK keyboard):
+ * 
+ *  Row 0: ESC - DEL 
+ * 	Row 1: ` - BACKSPACE
+ *  Row 2: TAB - ENTER
+ *  Row 3: CAPS - #
+ *  Row 4: SHIFT - SHIFT
+ *  Row 5: CTRL - FN
+ * 
+ * This function takes RGB data and sends it to each row in the keyboard.
+ * We expect 360 bytes (4 bytes per key), send in order row 0, key 0 to row 5, key 14.
  */
-static char *getDeviceDescription(int product_id)
-{
-	switch (product_id) {
-	case BLADE_2016_END:
-		return "Blade 15 late 2016";
-	case BLADE_2018_BASE:
-		return "Blade 15 2018 Base";
-	case BLADE_2018_ADV:
-		return "Blade 15 2018 Advanced";
-	case BLADE_2018_MERC:
-		return "Blade 15 2018 Mercury Edition";
-	case BLADE_2018_PRO_FHD:
-		return "Blade pro 2018 FHD";
-	case BLADE_2019_ADV:
-		return "Blade 15 2019 Advanced";
-	case BLADE_2019_MERC:
-		return "Blade 15 2019 Mercury Edition";
-	case BLADE_2019_STEALTH:
-		return "Blade 2019 Stealth";
-	case BLADE_PRO_2019:
-		return "Blade pro 2019";
-	case BLADE_2016_PRO:
-		return "Blade pro 2016";
-	case BLADE_2017_PRO:
-		return "Blade peo 2017";
-	case BLADE_2017_STEALTH_END:
-		return "Blade Stealth late 2017";
-	case BLADE_2017_STEALTH_MID:
-		return "Blade Stealth mid 2017";
-	case BLADE_QHD:
-		return "Blade QHD";
-	default:
-		return "UNKNOWN";
+static ssize_t key_colour_map_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
+	struct razer_laptop *laptop;
+	int i;
+	laptop = dev_get_drvdata(dev);
+	if (count != 360) {
+		dev_err(dev, "RGB Map expects 360 bytes. Got %ld Bytes", count);
+		return -EINVAL;
 	}
+	mutex_lock(&laptop->lock);
+	for (i = 0; i <= 5; i++) {
+		char bytes[60];
+		memcpy(&bytes[0], &buf[i*60] ,60);
+		sendRowDataToProfile(laptop->usb_dev, i, bytes);
+	}
+	displayProfile(laptop->usb_dev, 0);
+	mutex_unlock(&laptop->lock);
+	return count;
 }
-
-// Struct to hold some basic data about the laptops current state
-struct razer_laptop {
-	int product_id;			// Product ID
-	struct usb_device *usb_dev;	// USB Device we wish to talk to
-	struct mutex lock;		// Mutex
-	int fan_rpm;			// Fan RPM of manual mod (0 = AUTO)
-	int gaming_mode;		// Gaming mode (0 = Balanced) (1 = Gaming AKA Higher CPU TDP)
-};
 
 /**
  * Called on reading fan_rpm sysfs entry
@@ -88,52 +76,6 @@ static ssize_t power_mode_show(struct device *dev,
 		return sprintf(buf, "%s", "Gaming (1)\n");
 
 	return sprintf(buf, "%s", "Creator (2)\n");
-}
-
-/**
- * Generates a checksum Bit and places it in the 89th byte in the buffer array
- * If this is invalid then the EC will ignore the incomming message
- */
-static void crc(char *buffer)
-{
-	int res = 0;
-	int i;
-	// Simple CRC. Iterate over all bits from 2-87 and XOR them together
-	for (i = 2; i < 88; i++)
-		res ^= buffer[i];
-
-	buffer[88] = res; // Set the checksum bit
-}
-
-/**
- * Sends payload to the EC controller
- *
- * @param usb_device EC Controller USB device struct
- * @param buffer Payload buffer
- * @param minWait Minimum time to wait in us after sending the payload
- * @param maxWait Maximum time to wait in us after sending the payload
- */
-static int send_payload(struct usb_device *usb_dev, char *buffer,
-			unsigned long minWait, unsigned long maxWait)
-{
-	char *buf2;
-	int len;
-
-	crc(buffer); // Generate checksum for payload
-	buf2 = kmemdup(buffer, sizeof(char[90]), GFP_KERNEL);
-	len = usb_control_msg(usb_dev, usb_sndctrlpipe(usb_dev, 0),
-			      0x09,
-			      0x21,
-			      0x0300,
-			      0x0002,
-			      buf2,
-			      90,
-			      USB_CTRL_SET_TIMEOUT);
-	// Sleep for a specified number of us. If we send packets too quickly,
-	// the EC will ignore them
-	usleep_range(minWait, maxWait);
-	kfree(buf2);
-	return 0;
 }
 
 static ssize_t fan_rpm_store(struct device *dev, struct device_attribute *attr,
@@ -301,6 +243,7 @@ static ssize_t power_mode_store(struct device *dev,
 // Set our device attributes in sysfs
 static DEVICE_ATTR_RW(fan_rpm);
 static DEVICE_ATTR_RW(power_mode);
+static DEVICE_ATTR_WO(key_colour_map);
 
 // Called on load module
 static int razer_laptop_probe(struct hid_device *hdev,
@@ -326,7 +269,12 @@ static int razer_laptop_probe(struct hid_device *hdev,
 		kfree(dev);
 		return -ENODEV;
 	}
-
+	dev_info(&intf->dev, "Found supported device: %s\n",
+		 getDeviceDescription(dev->product_id));
+	device_create_file(&hdev->dev, &dev_attr_fan_rpm);
+	device_create_file(&hdev->dev, &dev_attr_power_mode);
+	device_create_file(&hdev->dev, &dev_attr_key_colour_map);
+	hid_set_drvdata(hdev, dev);
 	if (hid_parse(hdev)) {
 		hid_err(hdev, "Failed to parse device!\n");
 		kfree(dev);
@@ -337,11 +285,6 @@ static int razer_laptop_probe(struct hid_device *hdev,
 		kfree(dev);
 		return -ENODEV;
 	}
-
-	hid_set_drvdata(hdev, dev);
-	device_create_file(&hdev->dev, &dev_attr_fan_rpm);
-	device_create_file(&hdev->dev, &dev_attr_power_mode);
-
 	dev_info(&intf->dev, "Found supported device: %s\n",
 		 getDeviceDescription(dev->product_id));
 
@@ -357,6 +300,7 @@ static void razer_laptop_remove(struct hid_device *hdev)
 	dev = hid_get_drvdata(hdev);
 	device_remove_file(&hdev->dev, &dev_attr_fan_rpm);
 	device_remove_file(&hdev->dev, &dev_attr_power_mode);
+	device_remove_file(&hdev->dev, &dev_attr_key_colour_map);
 	hid_hw_stop(hdev);
 	kfree(dev);
 	dev_info(&intf->dev, "Razer_laptop_control: Unloaded\n");

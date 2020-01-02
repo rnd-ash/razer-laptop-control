@@ -1,3 +1,6 @@
+# RGB TEST BRANCH!
+This branch is for testing RGB control on Razer laptops
+
 # Razer laptop control project
 
 *I didn't fancy modifying the openrazer driver, so have something different*
