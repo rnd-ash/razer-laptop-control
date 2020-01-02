@@ -9,7 +9,8 @@ make
 ```
 
 ## Usage
-###To control fan RPM
+
+### To control fan RPM
 Auto RPM 
 ```
 sudo ./rgb_test --fan auto 
@@ -42,6 +43,7 @@ sudo ./rgb_test --rgb_demo starlight
 ```
 
 Wave demo (All 4 directions)
+
 ```
 sudo ./rgb_test --rgb_demo wave
 ```
