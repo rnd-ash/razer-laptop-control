@@ -66,12 +66,20 @@ int main(int argc, char *argv[]) {
             power_control(sysfs_path).setPowerMode(power_mode);
         } else if (std::string(argv[i]) == "--rgb_demo") {
             if (std::string(argv[i+1]) == "starlight") {
-                std::cout << "RGB Starlight demo for 10 seconds" << std::endl;
+                if (argc != i+3) {
+                    std::cout << "Starlight requires noise argument (1-10)" << std::endl;
+                    return 1;
+                }
+                int noise = atoi(argv[i+2]);
+                if (noise < 1 || noise > 10) {
+                    std::cout << "Starlight requires noise argument (1-10)" << std::endl;
+                }
+                std::cout << "Starlight mode!" << std::endl;
                 keyboard k = keyboard(sysfs_path);
-                EFFECT e = EFFECT(&k);
-                for (long i = 0; i < 10000/MAX_UPDATE_INTERVAL_MS; i++) {
+                STARLIGHT_EFFECT e = STARLIGHT_EFFECT(&k, noise);
+                while(true) {
                     e.startLightTick();
-                    usleep(MAX_UPDATE_INTERVAL_MS*100);
+                    usleep(MAX_UPDATE_INTERVAL_MS*1000);
                 }
             }
             else if (std::string(argv[i+1]) == "wave") {

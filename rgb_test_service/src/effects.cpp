@@ -4,47 +4,17 @@
 
 
 
-EFFECT::EFFECT(keyboard *board) {
+STARLIGHT_EFFECT::STARLIGHT_EFFECT(keyboard *board, int noise) {
     this->kboard = board;
+    this->noise = noise;
 }
 
-void EFFECT::updateTick() {
-    
-}
-
-void EFFECT::updateTickDemo1() {
-    struct colour c = {(__uint8_t)rand() % 255, (__uint8_t)rand() % 255, (__uint8_t)rand() % 255};
-    kboard->matrix->setColumnColour(tick, c);
-    if (tick >= 14) {
-        tick = 0;
-    } else {
-        tick++;
-    }
-    kboard->update();
-}
-
-void EFFECT::updateTickDemo2() {
-    struct colour c = {(__uint8_t)rand() % 255, (__uint8_t)rand() % 255, (__uint8_t)rand() % 255};
-    kboard->matrix->setRowColour(tick, c);
-    if (tick >= 5) {
-        tick = 0;
-    } else {
-        tick++;
-    }
-    kboard->update();
-}
-
-
-void EFFECT::updateTickDemo3() {
-    
-}
-#define MAX_TICKS 50
-void EFFECT::startLightTick() {
-    if (tick % 2 == 0) {
+void STARLIGHT_EFFECT::startLightTick() {
+    for (int i = 0; i < noise;i++) {
         addNewKey();
     }
     // GC tick
-    if (tick % MAX_TICKS * 2 == 0) {
+    if (tick % 10 == 0) {
         keysToUpdate.erase(
             std::remove_if(
                 keysToUpdate.begin(), keysToUpdate.end(),
@@ -83,7 +53,7 @@ void EFFECT::startLightTick() {
     kboard->update();
 }
 
-void EFFECT::addNewKey() {
+void STARLIGHT_EFFECT::addNewKey() {
     int posy = rand() % 6;
     int posx = rand() % 15;
     bool canAdd = false;
@@ -92,7 +62,7 @@ void EFFECT::addNewKey() {
             return;
         }
     }
-    int steps = 50;
+    int steps = 20-(1.5*noise);
     colour c = {rand() % 256, rand() % 256, rand() % 256};
     struct keyPos p;
     p.x = posx;

@@ -8,13 +8,9 @@
 #define MAX_UPDATE_INTERVAL_MS 40 // 25 times per second we can update the keyboard
 
 
-class EFFECT {
+class STARLIGHT_EFFECT {
     public:
-        EFFECT(keyboard *board);
-        virtual void updateTick();
-        virtual void updateTickDemo1();
-        virtual void updateTickDemo2();
-        virtual void updateTickDemo3();
+        STARLIGHT_EFFECT(keyboard *board, int noise);
         virtual void startLightTick();
     private:
         struct keyPos {
@@ -32,6 +28,7 @@ class EFFECT {
         keyboard *kboard;
         unsigned long tick = 0;
         void addNewKey();
+        int noise;
 };
 
 
