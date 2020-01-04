@@ -113,11 +113,11 @@ void EFFECT::addNewKey() {
 
 
 
-WAVE_EFFECT::WAVE_EFFECT(keyboard *board, int dir) {
+WAVE_EFFECT::WAVE_EFFECT(keyboard *board, int dir, int speed) {
     this->kboard = board;
-    this->current_start = {false, false, true,{0,-255,0}};
+    this->current_start = {true, false, true,{384,0,0}};
     this->updateRows(current_start, 15);
-    this->interval = 256;
+    this->interval = speed;
     this->direction = dir;
 }
 
@@ -170,9 +170,27 @@ void WAVE_EFFECT::updateRows(colour_seq start, int resolution) {
             kboard->matrix->setRowColour(loop_start, current.c);
         }
 
-        if (current.c.blue >= 512) {
+        if (current.redFalling) {
+            current.c.red -= this->interval;
+        } else {
+            current.c.red += this->interval;
+        }
+
+        if (current.c.green >= 384) {
+            current.greenFalling = true;
+        } else if (current.c.green <= -128) {
+            current.greenFalling = false;
+        }
+
+        if (current.greenFalling) {
+            current.c.green -= this->interval;
+        } else {
+            current.c.green += this->interval;
+        }
+
+        if (current.c.blue >= 384) {
             current.blueFalling = true;
-        } else if (current.c.blue <= -256) {
+        } else if (current.c.blue <= -128) {
             current.blueFalling = false;
         }
 
@@ -182,28 +200,10 @@ void WAVE_EFFECT::updateRows(colour_seq start, int resolution) {
             current.c.blue += this->interval;
         }
 
-        if (current.c.red >= 512) {
+        if (current.c.red >= 384) {
             current.redFalling = true;
-        } else if (current.c.red <= 0) {
+        } else if (current.c.red <= -128) {
             current.redFalling = false;
-        }
-
-        if (current.redFalling) {
-            current.c.red -= this->interval;
-        } else {
-            current.c.red += this->interval;
-        }
-
-        if (current.c.green >= 512) {
-            current.greenFalling = true;
-        } else if (current.c.green <= -256) {
-            current.greenFalling = false;
-        }
-
-        if (current.greenFalling) {
-            current.c.green -= this->interval;
-        } else {
-            current.c.green += this->interval;
         }
 
         if (!currentUpdate) {

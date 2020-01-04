@@ -71,35 +71,34 @@ int main(int argc, char *argv[]) {
                 EFFECT e = EFFECT(&k);
                 for (long i = 0; i < 10000/MAX_UPDATE_INTERVAL_MS; i++) {
                     e.startLightTick();
-                    usleep(MAX_UPDATE_INTERVAL_MS*1000);
+                    usleep(MAX_UPDATE_INTERVAL_MS*100);
                 }
             }
             else if (std::string(argv[i+1]) == "wave") {
-                std::cout << "RGB Starlight demo wave 10 seconds" << std::endl;
+                if (argc != i+4) {
+                    std::cout << "Wave requires 2 arguments (Direction 1-4), Speed(1-256)" << std::endl;
+                    return 1;
+                }
+                int dir = atoi(argv[i+2]);
+                int spd = atoi(argv[i+3]);
+                if (dir > 4 || dir < 0) {
+                    std::cout << "Wave direction incorrect!\n"
+                              << "(0) Right to left\n"
+                              << "(1) Left to Right\n"
+                              << "(2) Up to down\n"
+                              << "(3) Down to up" << std::endl;
+                    return 1;
+                }
+                if (spd < 0 || spd > 256) {
+                    std::cout << "Wave speed must be between 1 and 256" << std::endl;
+                    return 1;
+                }
                 keyboard k = keyboard(sysfs_path);
-                WAVE_EFFECT e = WAVE_EFFECT(&k, 0);
-                std::cout << "LEFT >> RIGHT" << std::endl;
-                for (long i = 0; i < 7500000/MAX_UPDATE_INTERVAL_MS; i++) {
+                WAVE_EFFECT e = WAVE_EFFECT(&k, dir, spd);
+                std::cout << "Wave mode!" << std::endl;
+                while (true) {
                     e.updateTick();
-                    usleep(MAX_UPDATE_INTERVAL_MS);
-                }
-                e.changeDir(1);
-                std::cout << "RIGHT >> LEFT" << std::endl;
-                for (long i = 0; i < 7500000/MAX_UPDATE_INTERVAL_MS; i++) {
-                    e.updateTick();
-                    usleep(MAX_UPDATE_INTERVAL_MS);
-                }
-                e.changeDir(2);
-                std::cout << "DOWN >> UP" << std::endl;
-                for (long i = 0; i < 7500000/MAX_UPDATE_INTERVAL_MS; i++) {
-                    e.updateTick();
-                    usleep(MAX_UPDATE_INTERVAL_MS);
-                }
-                e.changeDir(3);
-                std::cout << "UP >> DOWN" << std::endl;
-                for (long i = 0; i < 7500000/MAX_UPDATE_INTERVAL_MS; i++) {
-                    e.updateTick();
-                    usleep(MAX_UPDATE_INTERVAL_MS);
+                    usleep(MAX_UPDATE_INTERVAL_MS*1000);
                 }
             }
             else if (std::string(argv[i+1]) == "static") {

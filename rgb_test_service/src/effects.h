@@ -23,8 +23,8 @@ class EFFECT {
             colour currentColour;
             colour targetColour;
             float redShift;
-            float blueShift;
             float greenShift;
+            float blueShift;
             bool falling;
             bool animationDone;
         };
@@ -37,15 +37,15 @@ class EFFECT {
 
 class WAVE_EFFECT {
     public :
-        WAVE_EFFECT(keyboard *board, int dir);
+        WAVE_EFFECT(keyboard *board, int dir, int speed);
         void changeDir(int dir);
         void updateTick();
     private:
 
         struct colour_seq {
-            bool blueFalling;
             bool redFalling;
             bool greenFalling;
+            bool blueFalling;
             colour c;
         };
         colour_seq current_start;
