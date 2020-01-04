@@ -6,18 +6,6 @@
 
 #IncludeRegexTransform: 
 
-/home/ashcon/code/razer-laptop-control/rgb_test_service/src/colours.hpp
-keyboard.hpp
-/home/ashcon/code/razer-laptop-control/rgb_test_service/src/keyboard.hpp
-
-/home/ashcon/code/razer-laptop-control/rgb_test_service/src/effects.cpp
-effects.h
-/home/ashcon/code/razer-laptop-control/rgb_test_service/src/effects.h
-colours.hpp
-/home/ashcon/code/razer-laptop-control/rgb_test_service/src/colours.hpp
-algorithm
--
-
 /home/ashcon/code/razer-laptop-control/rgb_test_service/src/effects.h
 keyboard.hpp
 /home/ashcon/code/razer-laptop-control/rgb_test_service/src/keyboard.hpp

@@ -74,32 +74,47 @@ int main(int argc, char *argv[]) {
                     usleep(MAX_UPDATE_INTERVAL_MS*1000);
                 }
             }
-            if (std::string(argv[i+1]) == "wave") {
+            else if (std::string(argv[i+1]) == "wave") {
                 std::cout << "RGB Starlight demo wave 10 seconds" << std::endl;
                 keyboard k = keyboard(sysfs_path);
                 WAVE_EFFECT e = WAVE_EFFECT(&k, 0);
                 std::cout << "LEFT >> RIGHT" << std::endl;
-                for (long i = 0; i < 5000/MAX_UPDATE_INTERVAL_MS; i++) {
+                for (long i = 0; i < 7500000/MAX_UPDATE_INTERVAL_MS; i++) {
                     e.updateTick();
-                    usleep(MAX_UPDATE_INTERVAL_MS*1000);
+                    usleep(MAX_UPDATE_INTERVAL_MS);
                 }
                 e.changeDir(1);
                 std::cout << "RIGHT >> LEFT" << std::endl;
-                for (long i = 0; i < 5000/MAX_UPDATE_INTERVAL_MS; i++) {
+                for (long i = 0; i < 7500000/MAX_UPDATE_INTERVAL_MS; i++) {
                     e.updateTick();
-                    usleep(MAX_UPDATE_INTERVAL_MS*1000);
+                    usleep(MAX_UPDATE_INTERVAL_MS);
                 }
                 e.changeDir(2);
                 std::cout << "DOWN >> UP" << std::endl;
-                for (long i = 0; i < 5000/MAX_UPDATE_INTERVAL_MS; i++) {
+                for (long i = 0; i < 7500000/MAX_UPDATE_INTERVAL_MS; i++) {
                     e.updateTick();
-                    usleep(MAX_UPDATE_INTERVAL_MS*1000);
+                    usleep(MAX_UPDATE_INTERVAL_MS);
                 }
                 e.changeDir(3);
                 std::cout << "UP >> DOWN" << std::endl;
-                for (long i = 0; i < 5000/MAX_UPDATE_INTERVAL_MS; i++) {
+                for (long i = 0; i < 7500000/MAX_UPDATE_INTERVAL_MS; i++) {
                     e.updateTick();
-                    usleep(MAX_UPDATE_INTERVAL_MS*1000);
+                    usleep(MAX_UPDATE_INTERVAL_MS);
+                }
+            }
+            else if (std::string(argv[i+1]) == "static") {
+                if (argc == i+5) {
+                    int r = atoi(argv[i+2]);
+                    int g = atoi(argv[i+3]);
+                    int b = atoi(argv[i+4]);
+                    keyboard k = keyboard(sysfs_path);
+                    k.matrix->setAllColour({r,g,b});
+                    k.update();
+                    k.update();
+                }
+                else {
+                    std::cout << "Static mode needs 3 numbers (R,G,B)" << std::endl;
+                    return 1;
                 }
             }
         }

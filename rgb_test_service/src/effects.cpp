@@ -113,14 +113,11 @@ void EFFECT::addNewKey() {
 
 
 
-
-
-
 WAVE_EFFECT::WAVE_EFFECT(keyboard *board, int dir) {
     this->kboard = board;
-    this->current_start = {false, false, false,{0xFF,-255,0x00}};
+    this->current_start = {false, false, true,{0,-255,0}};
     this->updateRows(current_start, 15);
-    this->interval = 256 / 5;
+    this->interval = 256;
     this->direction = dir;
 }
 
@@ -173,9 +170,9 @@ void WAVE_EFFECT::updateRows(colour_seq start, int resolution) {
             kboard->matrix->setRowColour(loop_start, current.c);
         }
 
-        if (current.c.blue > 255*2) {
+        if (current.c.blue >= 512) {
             current.blueFalling = true;
-        } else if (current.c.blue < -255) {
+        } else if (current.c.blue <= -256) {
             current.blueFalling = false;
         }
 
@@ -185,9 +182,9 @@ void WAVE_EFFECT::updateRows(colour_seq start, int resolution) {
             current.c.blue += this->interval;
         }
 
-        if (current.c.red > 255*2) {
+        if (current.c.red >= 512) {
             current.redFalling = true;
-        } else if (current.c.red < -255) {
+        } else if (current.c.red <= 0) {
             current.redFalling = false;
         }
 
@@ -197,9 +194,9 @@ void WAVE_EFFECT::updateRows(colour_seq start, int resolution) {
             current.c.red += this->interval;
         }
 
-        if (current.c.green > 255*2) {
+        if (current.c.green >= 512) {
             current.greenFalling = true;
-        } else if (current.c.green < -255) {
+        } else if (current.c.green <= -256) {
             current.greenFalling = false;
         }
 
