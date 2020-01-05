@@ -19,7 +19,6 @@ struct key_colour { // I'm British. colour is spelt like this and not 'color' :)
     __u8 red; // Red level (0-255)
     __u8 green; // Green level (0-255)
     __u8 blue; // Blue level (0-255)
-    __u8 saturation; // 0 = Key basically off, 255 = Full colour defined with red, green, blue
 };
 
 /**

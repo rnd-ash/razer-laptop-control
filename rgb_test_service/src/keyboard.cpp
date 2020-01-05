@@ -12,7 +12,7 @@ keyboard::keyboard(std::filesystem::path p) {
 void keyboard::update() {
     std::ofstream file;
     file.open(path_all);
-    file.write(this->matrix->toRGBData(), 360);
+    file.write(this->matrix->toRGBData(), 270);
     file.close();
 }
 
@@ -68,8 +68,7 @@ char * key_matrix::toRGBData() {
             buffer[pos  ] = map[y][x].red;
             buffer[pos+1] = map[y][x].green;
             buffer[pos+2] = map[y][x].blue;
-            buffer[pos+3] = 0xFF;
-            pos +=4;
+            pos +=3;
         }
     }
     return buffer; 

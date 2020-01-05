@@ -33,14 +33,14 @@ static ssize_t key_colour_map_store(struct device *dev, struct device_attribute 
 	struct razer_laptop *laptop;
 	int i;
 	laptop = dev_get_drvdata(dev);
-	if (count != 360) {
-		dev_err(dev, "RGB Map expects 360 bytes. Got %ld Bytes", count);
+	if (count != 270) {
+		dev_err(dev, "RGB Map expects 270 bytes. Got %ld Bytes", count);
 		return -EINVAL;
 	}
 	mutex_lock(&laptop->lock);
 	for (i = 0; i <= 5; i++) {
-		char bytes[60];
-		memcpy(&bytes[0], &buf[i*60] ,60);
+		char bytes[45];
+		memcpy(&bytes[0], &buf[i*45] ,45);
 		sendRowDataToProfile(laptop->usb_dev, i, bytes);
 	}
 	displayProfile(laptop->usb_dev, 0);
