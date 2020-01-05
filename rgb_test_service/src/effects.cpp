@@ -189,40 +189,50 @@ void WAVE_EFFECT::updateRows(colour_seq start, int resolution) {
 AMBIENT_EFFECT::AMBIENT_EFFECT(keyboard *board) {
     this->kboard = board;
     this->display = XOpenDisplay(NULL);
-    Screen* s = DefaultScreenOfDisplay(display);
+    int screens = ScreenCount(display);
+    Screen *s;
+    for (int i = 0; i < screens; i++) {
+        s = ScreenOfDisplay(display, i);
+        printf("Screen %d: %dX%d\n",i, s->width, s->height);
+    }
+
+
+
     width = 1920/10;
     height = 1080/10;
-    root = RootWindow(display, 0);
+    root = RootWindowOfScreen(ScreenOfDisplay(display, 0));
     std::cout << width << " " << height << std::endl;
 }
 
 void AMBIENT_EFFECT::updateTick() {
-    colour c = {0};
     int s_y = height / 6;
     int s_x = width / 15;
     image = XGetImage(display,root, 0,0 , width*10, height*10, AllPlanes, ZPixmap);
     unsigned long red_mask = image->red_mask;
     unsigned long green_mask = image->green_mask;
     unsigned long blue_mask = image->blue_mask;
+
+    unsigned long red = 0;
+    unsigned long green = 0;
+    unsigned long blue = 0;
     int samples = 0;
     for (int x = 0; x < width; x++) {
         for (int y = 0; y < height; y++) {
             unsigned long pixel = XGetPixel(image,x*10,y*10);
-            unsigned int blue = pixel & blue_mask;
-            unsigned int green = (pixel & green_mask) >> 8;
-            unsigned int red = (pixel & red_mask) >> 16;
-            c.red += red; 
-            c.green += green; 
-            c.blue += blue;
+            blue += pixel & blue_mask;
+            green += (pixel & green_mask) >> 8;
+            red += (pixel & red_mask) >> 16;
             samples++;
-
-            if (x % s_x == 0 && y % s_y == 0) {
-                c.red = c.red / samples;
-                c.green = c.green / samples;
-                c.blue = c.blue / samples;
-                kboard->matrix->setKeyColour(x / s_x, y / s_y, c);
+            if ((x % s_x == 0 || x == width) && (y % s_y == 0 || y == height)) {
+                colour c;
+                c.red = red/samples;
+                c.green = green/samples;
+                c.blue = blue/samples;
+                kboard->matrix->setKeyColour((x / s_x)-1, y / s_y, c);
                 samples = 0;
-                c = {0x00};
+                red = 0;
+                green = 0;
+                blue = 0;
             }
         }
     }
