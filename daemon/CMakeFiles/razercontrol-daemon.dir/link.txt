@@ -1,0 +1,1 @@
+/usr/bin/c++    -rdynamic CMakeFiles/razercontrol-daemon.dir/src/main.cpp.o  -o razercontrol-daemon 

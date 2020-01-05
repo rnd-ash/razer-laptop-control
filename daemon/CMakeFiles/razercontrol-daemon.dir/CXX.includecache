@@ -1,0 +1,18 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/ashcon/code/razer-laptop-control/daemon/src/main.cpp
+QCoreApplication
+-
+QLocalServer
+-
+QLocalSocket
+-
+QStringList
+-
+

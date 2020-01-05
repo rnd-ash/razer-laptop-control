@@ -2,6 +2,8 @@
 #define EFFECTS_H_
 #include "keyboard.hpp"
 #include <stdlib.h>
+#include "X11/Xlib.h"
+#include "X11/Xutil.h"
 #include <vector>
 
 // DO NOT CHANGE THIS TO ANYTHING HIGHER! Doing so can make the keyboard unresponsive!
@@ -51,6 +53,20 @@ class WAVE_EFFECT {
         float interval;
         int direction;
         void updateRows(colour_seq start, int resolution);
+};
+
+class AMBIENT_EFFECT {
+    public:
+        AMBIENT_EFFECT(keyboard *board);
+        void updateTick();
+    private:
+        keyboard *kboard;
+        int width;
+        int height;
+        Display *display;
+        Window root;
+        XWindowAttributes gwa;
+        XImage *image;
 };
 
 #endif

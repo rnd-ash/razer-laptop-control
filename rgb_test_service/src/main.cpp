@@ -124,6 +124,15 @@ int main(int argc, char *argv[]) {
                     return 1;
                 }
             }
+
+            else if (std::string(argv[i+1]) == "ambient") {
+                keyboard k = keyboard(sysfs_path);
+                AMBIENT_EFFECT e = AMBIENT_EFFECT(&k);
+                while (true) {
+                    e.updateTick();
+                    usleep(MAX_UPDATE_INTERVAL_MS*1000);
+                }
+            }
         }
     }
     return 0;

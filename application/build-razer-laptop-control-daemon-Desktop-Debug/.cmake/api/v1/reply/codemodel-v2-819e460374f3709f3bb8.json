@@ -1,0 +1,68 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "razer-laptop-control-daemon",
+					"targetIndexes" : 
+					[
+						0,
+						1
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "razer-laptop-control-daemon::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-razer-laptop-control-daemon-Debug-51ff279026f5b6e21ab6.json",
+					"name" : "razer-laptop-control-daemon",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "razer-laptop-control-daemon_autogen::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-razer-laptop-control-daemon_autogen-Debug-3a315fdc0c21c3ce5435.json",
+					"name" : "razer-laptop-control-daemon_autogen",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home/ashcon/code/razer-laptop-control/application/build-razer-laptop-control-daemon-Desktop-Debug",
+		"source" : "/home/ashcon/code/razer-laptop-control/application/razer-laptop-control-daemon"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 0
+	}
+}

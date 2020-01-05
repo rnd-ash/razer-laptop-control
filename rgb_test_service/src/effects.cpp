@@ -3,7 +3,6 @@
 #include <algorithm>
 
 
-
 STARLIGHT_EFFECT::STARLIGHT_EFFECT(keyboard *board, int noise) {
     this->kboard = board;
     this->noise = noise;
@@ -85,7 +84,7 @@ void STARLIGHT_EFFECT::addNewKey() {
 
 WAVE_EFFECT::WAVE_EFFECT(keyboard *board, int dir, int speed) {
     this->kboard = board;
-    this->current_start = {true, false, true,{384,0,0}};
+    this->current_start = {true, false, true,{512,0,0}};
     this->updateRows(current_start, 15);
     this->interval = speed;
     this->direction = dir;
@@ -146,9 +145,9 @@ void WAVE_EFFECT::updateRows(colour_seq start, int resolution) {
             current.c.red += this->interval;
         }
 
-        if (current.c.green >= 384) {
+        if (current.c.green >= 512) {
             current.greenFalling = true;
-        } else if (current.c.green <= -128) {
+        } else if (current.c.green <= -256) {
             current.greenFalling = false;
         }
 
@@ -158,9 +157,9 @@ void WAVE_EFFECT::updateRows(colour_seq start, int resolution) {
             current.c.green += this->interval;
         }
 
-        if (current.c.blue >= 384) {
+        if (current.c.blue >= 512) {
             current.blueFalling = true;
-        } else if (current.c.blue <= -128) {
+        } else if (current.c.blue <= -256) {
             current.blueFalling = false;
         }
 
@@ -170,9 +169,9 @@ void WAVE_EFFECT::updateRows(colour_seq start, int resolution) {
             current.c.blue += this->interval;
         }
 
-        if (current.c.red >= 384) {
+        if (current.c.red >= 512) {
             current.redFalling = true;
-        } else if (current.c.red <= -128) {
+        } else if (current.c.red <= -256) {
             current.redFalling = false;
         }
 
@@ -183,5 +182,50 @@ void WAVE_EFFECT::updateRows(colour_seq start, int resolution) {
 
         loop_start += loop_step;
     }
+    kboard->update();
+}
+
+
+AMBIENT_EFFECT::AMBIENT_EFFECT(keyboard *board) {
+    this->kboard = board;
+    this->display = XOpenDisplay(NULL);
+    Screen* s = DefaultScreenOfDisplay(display);
+    width = 1920/10;
+    height = 1080/10;
+    root = RootWindow(display, 0);
+    std::cout << width << " " << height << std::endl;
+}
+
+void AMBIENT_EFFECT::updateTick() {
+    colour c = {0};
+    int s_y = height / 6;
+    int s_x = width / 15;
+    image = XGetImage(display,root, 0,0 , width*10, height*10, AllPlanes, ZPixmap);
+    unsigned long red_mask = image->red_mask;
+    unsigned long green_mask = image->green_mask;
+    unsigned long blue_mask = image->blue_mask;
+    int samples = 0;
+    for (int x = 0; x < width; x++) {
+        for (int y = 0; y < height; y++) {
+            unsigned long pixel = XGetPixel(image,x*10,y*10);
+            unsigned int blue = pixel & blue_mask;
+            unsigned int green = (pixel & green_mask) >> 8;
+            unsigned int red = (pixel & red_mask) >> 16;
+            c.red += red; 
+            c.green += green; 
+            c.blue += blue;
+            samples++;
+
+            if (x % s_x == 0 && y % s_y == 0) {
+                c.red = c.red / samples;
+                c.green = c.green / samples;
+                c.blue = c.blue / samples;
+                kboard->matrix->setKeyColour(x / s_x, y / s_y, c);
+                samples = 0;
+                c = {0x00};
+            }
+        }
+    }
+    XDestroyImage(image);
     kboard->update();
 }
