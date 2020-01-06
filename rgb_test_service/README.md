@@ -37,15 +37,25 @@ sudo ./rgb_test --power creator
 ### RGB Demos
 These are work in progresses, re-writing Razer synapse's effects in C++. Currently, they are limited to a demo only (10 seconds).
 
-Starlight mode demo:
+#### Starlight mode:
 ```
-sudo ./rgb_test --rgb_demo starlight
+sudo ./rgb_test --rgb_demo starlight <NOISE>
 ```
+Where noise can be 1-10 (1 = low noise, 10 = high noise)
 
-Wave demo (All 4 directions)
+#### Wave (All 4 directions)
 ```
-sudo ./rgb_test --rgb_demo wave
+sudo ./rgb_test --rgb_demo wave <DIR> <SPD>
 ```
+Where DIR = Direction:
+* 0 = Right -> Left
+* 1 = Left -> Right
+* 2 = Up -> Down
+* 3 = Down -> Up
 
+SPD Can be from 1-255
 
-
+#### Ambient mode (Requires X11, not wayland!)
+```
+sudo ./rgb_test --rgb_demo ambient
+```
