@@ -1,7 +1,0 @@
-[
-{
-  "directory": "/home/ashcon/code/razer-laptop-control/build",
-  "command": "/usr/bin/g++    -g   -o CMakeFiles/rgb_test.dir/main.cpp.o -c /home/ashcon/code/razer-laptop-control/main.cpp",
-  "file": "/home/ashcon/code/razer-laptop-control/main.cpp"
-}
-]

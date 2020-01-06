@@ -1,1 +1,0 @@
-/usr/bin/g++  -g  -rdynamic CMakeFiles/rgb_test.dir/main.cpp.o  -o rgb_test 

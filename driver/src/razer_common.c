@@ -241,9 +241,9 @@ static ssize_t power_mode_store(struct device *dev,
 }
 
 // Set our device attributes in sysfs
-static DEVICE_ATTR_RW(fan_rpm);
-static DEVICE_ATTR_RW(power_mode);
-static DEVICE_ATTR_WO(key_colour_map);
+static DEVICE_ATTR(fan_rpm);
+static DEVICE_ATTR(power_mode);
+static DEVICE_ATTR(key_colour_map);
 
 // Called on load module
 static int razer_laptop_probe(struct hid_device *hdev,

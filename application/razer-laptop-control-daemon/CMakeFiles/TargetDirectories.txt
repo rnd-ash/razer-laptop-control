@@ -1,4 +1,0 @@
-/home/ashcon/code/razer-laptop-control/application/razer-laptop-control-daemon/CMakeFiles/rebuild_cache.dir
-/home/ashcon/code/razer-laptop-control/application/razer-laptop-control-daemon/CMakeFiles/razer-laptop-control-daemon.dir
-/home/ashcon/code/razer-laptop-control/application/razer-laptop-control-daemon/CMakeFiles/edit_cache.dir
-/home/ashcon/code/razer-laptop-control/application/razer-laptop-control-daemon/CMakeFiles/razer-laptop-control-daemon_autogen.dir

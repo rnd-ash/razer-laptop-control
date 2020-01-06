@@ -1,15 +1,4 @@
-ACTION!="add", GOTO="rlc-end"
-SUBSYSTEMS=="usb|input|hid", ATTRS{idVendor}=="1532", GOTO="rlc-devices"
-GOTO="rlc-end"
-
-LABEL="rlc-devices"
-
-ATTRS{idProduct}=="0224|0233|023B|0240|023A|0245|022D|0232|0239|0234|022F|0225|0210|020F"
-    ATTRS{idVendor}=="1532", ENV{ID_FOUND}="1"
-
-
-
-ENV{ID_FOUND}!="1", GOTO "rlc-end"
-SUBSYSTEM=="input|hid", GROUP:="plugdev"
-SUBSYSTEM!="hid", GOTO="rlc-end"
-LABEL="rlc-end"
+DRIVER=="Razer laptop System control driver", \
+SUBSYSTEM=="hid", \
+GROUP="plugdev", \
+MODE:="0666"

@@ -211,25 +211,27 @@ void AMBIENT_EFFECT::updateTick() {
     unsigned long red_mask = image->red_mask;
     unsigned long green_mask = image->green_mask;
     unsigned long blue_mask = image->blue_mask;
-
+    std::cout << image->byte_order << std::endl;
     unsigned long red = 0;
     unsigned long green = 0;
     unsigned long blue = 0;
-    int samples = 0;
+    int samples = 1;
     for (int x = 0; x < width; x++) {
         for (int y = 0; y < height; y++) {
             unsigned long pixel = XGetPixel(image,x*10,y*10);
             blue += pixel & blue_mask;
             green += (pixel & green_mask) >> 8;
             red += (pixel & red_mask) >> 16;
+            //std::cout <<  << std::endl;
             samples++;
+            //printf("R: %d G: %d B: %d\n", red, green, blue);
             if ((x % s_x == 0 || x == width) && (y % s_y == 0 || y == height)) {
                 colour c;
                 c.red = red/samples;
                 c.green = green/samples;
                 c.blue = blue/samples;
-                kboard->matrix->setKeyColour((x / s_x)-1, y / s_y, c);
-                samples = 0;
+                kboard->matrix->setKeyColour(x / s_x, y / s_y, c);
+                samples = 1;
                 red = 0;
                 green = 0;
                 blue = 0;
