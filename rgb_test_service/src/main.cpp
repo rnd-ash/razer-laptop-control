@@ -64,6 +64,15 @@ int main(int argc, char *argv[]) {
                 power_mode = 2;
             }
             power_control(sysfs_path).setPowerMode(power_mode);
+        } else if (std::string(argv[i]) == "--brightness") {
+            int brightness = atoi(argv[i+1]);
+            if (brightness < 0 || brightness > 255) {
+                std::cout << "Keyboard brightness must be between 0 and 255!" << std::endl;
+                return 1;
+            }
+            keyboard k = keyboard(sysfs_path);
+            k.setBrightness((__uint8_t) brightness);
+
         } else if (std::string(argv[i]) == "--rgb_demo") {
             if (std::string(argv[i+1]) == "starlight") {
                 if (argc != i+3) {

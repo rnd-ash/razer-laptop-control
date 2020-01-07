@@ -1,7 +1,8 @@
 #include "keyboard.hpp"
-
+#include <string.h>
 keyboard::keyboard(std::filesystem::path p) {
     path_all = p.append("key_colour_map");
+    brightness_path = p.parent_path().append("brightness");
     struct colour c;
     c.blue = 255;
     c.green = 255;
@@ -13,6 +14,14 @@ void keyboard::update() {
     std::ofstream file;
     file.open(path_all);
     file.write(this->matrix->toRGBData(), 270);
+    file.close();
+}
+
+void keyboard::setBrightness(uint8_t brightness) {
+    std::ofstream file;
+    file.open(brightness_path);
+    std::string s = std::to_string(brightness);
+    file.write(s.c_str(), 4);
     file.close();
 }
 

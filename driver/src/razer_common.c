@@ -48,6 +48,26 @@ static ssize_t key_colour_map_store(struct device *dev, struct device_attribute 
 	return count;
 }
 
+static ssize_t brightness_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
+	struct razer_laptop *laptop;
+	laptop = dev_get_drvdata(dev);
+	unsigned long brightness;
+	if (kstrtol(buf, 10, &brightness)) { // Convert users input to integer
+		dev_warn(dev, "User entered an invalid input for brightness");
+		return -EINVAL;
+	}
+
+	if (brightness > 255 || brightness < 0) {
+		dev_warn(dev, "User entered an invalid input for brightness");
+		return -EINVAL;
+	}
+
+	mutex_lock(&laptop->lock);
+	sendBrightness(laptop->usb_dev, (__u8) brightness);
+	mutex_unlock(&laptop->lock);
+	return count;
+}
+
 /**
  * Called on reading fan_rpm sysfs entry
  */
@@ -241,9 +261,10 @@ static ssize_t power_mode_store(struct device *dev,
 }
 
 // Set our device attributes in sysfs
-static DEVICE_ATTR(fan_rpm);
-static DEVICE_ATTR(power_mode);
-static DEVICE_ATTR(key_colour_map);
+static DEVICE_ATTR_RW(fan_rpm);
+static DEVICE_ATTR_RW(power_mode);
+static DEVICE_ATTR_WO(key_colour_map);
+static DEVICE_ATTR_WO(brightness);
 
 // Called on load module
 static int razer_laptop_probe(struct hid_device *hdev,
@@ -274,6 +295,7 @@ static int razer_laptop_probe(struct hid_device *hdev,
 	device_create_file(&hdev->dev, &dev_attr_fan_rpm);
 	device_create_file(&hdev->dev, &dev_attr_power_mode);
 	device_create_file(&hdev->dev, &dev_attr_key_colour_map);
+	device_create_file(&hdev->dev, &dev_attr_brightness);
 	hid_set_drvdata(hdev, dev);
 	if (hid_parse(hdev)) {
 		hid_err(hdev, "Failed to parse device!\n");
@@ -301,6 +323,7 @@ static void razer_laptop_remove(struct hid_device *hdev)
 	device_remove_file(&hdev->dev, &dev_attr_fan_rpm);
 	device_remove_file(&hdev->dev, &dev_attr_power_mode);
 	device_remove_file(&hdev->dev, &dev_attr_key_colour_map);
+	device_remove_file(&hdev->dev, &dev_attr_brightness);
 	hid_hw_stop(hdev);
 	kfree(dev);
 	dev_info(&intf->dev, "Razer_laptop_control: Unloaded\n");

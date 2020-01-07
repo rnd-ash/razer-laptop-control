@@ -46,4 +46,6 @@ int sendRowDataToProfile(struct usb_device *usb, int row_number, char* row_bytes
  */
 int displayProfile(struct usb_device *usb, int profileNum);
 
+
+int sendBrightness(struct usb_device *usb, __u8 brightness);
 #endif

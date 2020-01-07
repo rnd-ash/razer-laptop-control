@@ -198,8 +198,8 @@ AMBIENT_EFFECT::AMBIENT_EFFECT(keyboard *board) {
 
 
 
-    width = 1920/10;
-    height = 1080/10;
+    width = 1920/5;
+    height = 1080/5;
     root = RootWindowOfScreen(ScreenOfDisplay(display, 0));
     std::cout << width << " " << height << std::endl;
 }
@@ -207,36 +207,67 @@ AMBIENT_EFFECT::AMBIENT_EFFECT(keyboard *board) {
 void AMBIENT_EFFECT::updateTick() {
     int s_y = height / 6;
     int s_x = width / 15;
-    image = XGetImage(display,root, 0,0 , width*10, height*10, AllPlanes, ZPixmap);
+    image = XGetImage(display,root, 0,0 , width*5, height*5, AllPlanes, ZPixmap);
     unsigned long red_mask = image->red_mask;
     unsigned long green_mask = image->green_mask;
     unsigned long blue_mask = image->blue_mask;
-    std::cout << image->byte_order << std::endl;
     unsigned long red = 0;
     unsigned long green = 0;
     unsigned long blue = 0;
-    int samples = 1;
-    for (int x = 0; x < width; x++) {
-        for (int y = 0; y < height; y++) {
-            unsigned long pixel = XGetPixel(image,x*10,y*10);
-            blue += pixel & blue_mask;
-            green += (pixel & green_mask) >> 8;
-            red += (pixel & red_mask) >> 16;
-            //std::cout <<  << std::endl;
-            samples++;
-            //printf("R: %d G: %d B: %d\n", red, green, blue);
-            if ((x % s_x == 0 || x == width) && (y % s_y == 0 || y == height)) {
-                colour c;
-                c.red = red/samples;
-                c.green = green/samples;
-                c.blue = blue/samples;
-                kboard->matrix->setKeyColour(x / s_x, y / s_y, c);
-                samples = 1;
-                red = 0;
-                green = 0;
-                blue = 0;
-            }
+
+    int samples = 0;
+    int startX = 0;
+    int startY = 0;
+    int endX = s_x;
+    int endY = s_y;
+    int x_count = 0;
+    int y_count = 0;
+    while(endX != width && endY != height) {
+        unsigned long pixel = XGetPixel(image,startX*5,startY*5);
+        blue += pixel & blue_mask;
+        green += (pixel & green_mask) >> 8;
+        red += (pixel & red_mask) >> 16;
+        samples++;
+        std::cout << "X_C: " << x_count << " Y_C: " << y_count << std::endl;
+        startX++;
+        if (startX == endX && startY == endY) {
+            std::cout << "Sample done " << startX << " " << startY << " " << samples  << std::endl;
+            std::cout << "X: " << endX << " Y: " << endY << std::endl;
+            x_count++;
+            y_count++; 
+            startX = 0;
+            startY = s_y * (y_count+1);
+        } else if (startX == endX) {
+            startX = x_count * s_x;
+            startY++;
         }
+
+
+        // Sample done!
+        //if (startY == s_y && startX == s_x) {
+            /*
+            colour c;
+            c.red = red/samples;
+            c.green = green/samples;
+            c.blue = blue/samples;
+            kboard->matrix->setKeyColour(endX % 15, endY % 6, c);
+            samples = 1;
+            red = 0;
+            green = 0;
+            blue = 0;
+            if (endX == width) {
+                endY += s_y;
+            } else {
+                
+                endX += s_x;
+            }
+        } else if (startX == endX) {
+            startX = s_x * x_count;
+            startY++;
+        }
+        startX++;
+        */
+
     }
     XDestroyImage(image);
     kboard->update();

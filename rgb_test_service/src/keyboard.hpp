@@ -45,7 +45,9 @@ class keyboard {
         keyboard(std::filesystem::path p);
         void update();
         key_matrix *matrix;
+        void setBrightness(uint8_t brightness);
     private:
+        std::filesystem::path brightness_path;
         std::filesystem::path path_all;
 };
 #endif

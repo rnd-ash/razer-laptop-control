@@ -58,6 +58,7 @@ Mkfile.old
 **/CMakeFiles/
 **/CTestTestfile.cmake
 **/Makefile
+!/driver/Makefile
 **/*.cbp
 **/CMakeScripts
 **/compile_commands.json
