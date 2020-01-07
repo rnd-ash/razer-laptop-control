@@ -34,6 +34,12 @@ Creator mode
 sudo ./rgb_test --power creator
 ```
 
+### Keyboard brightness control
+```
+sudo ./rgb_test --brightness <BRT>
+```
+where BRT can be any value between 0 (off) and 255 (100%)
+
 ### RGB Demos
 These are work in progresses, re-writing Razer synapse's effects in C++. Currently, they are limited to a demo only (10 seconds).
 
