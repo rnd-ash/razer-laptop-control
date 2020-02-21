@@ -26,13 +26,13 @@ driver_clean:
 
 driver_dkms:
 	@echo "Installing kernel modules for DKMS"
-	install -m 644 -v -D Makefile /usr/src/$(DKMS_NAME)-$(DKMS_VER)/Makefile
-	install -m 644 -v -D dkms.conf /usr/src/$(DKMS_NAME)-$(DKMS_VER)/dkms.conf
-	install -m 755 -v -d src /usr/src/$(DKMS_NAME)-$(DKMS_VER)/src
-	install -m 644 -v -D src/*.c /usr/src/$(DKMS_NAME)-$(DKMS_VER)/src/
-	install -m 644 -v -D src/*.h /usr/src/$(DKMS_NAME)-$(DKMS_VER)/src/
-	install -m 644 -v -D src/Makefile /usr/src/$(DKMS_NAME)-$(DKMS_VER)/src/
-	rm -rf /usr/src/$(DKMS_NAME)-$(DKMS_VER)/src/*.mod.c
+	install -m 644 -v -D Makefile $(DESTDIR)/usr/src/$(DKMS_NAME)-$(DKMS_VER)/Makefile
+	install -m 644 -v -D dkms.conf $(DESTDIR)/usr/src/$(DKMS_NAME)-$(DKMS_VER)/dkms.conf
+	install -m 755 -v -d src $(DESTDIR)/usr/src/$(DKMS_NAME)-$(DKMS_VER)/src
+	install -m 644 -v -D src/*.c $(DESTDIR)/usr/src/$(DKMS_NAME)-$(DKMS_VER)/src/
+	install -m 644 -v -D src/*.h$(DESTDIR) /usr/src/$(DKMS_NAME)-$(DKMS_VER)/src/
+	install -m 644 -v -D src/Makefile $(DESTDIR)/usr/src/$(DKMS_NAME)-$(DKMS_VER)/src/
+	rm -rf $(DESTDIR)/usr/src/$(DKMS_NAME)-$(DKMS_VER)/src/*.mod.c
 
 
 remove_dkms:
