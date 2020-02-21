@@ -18,7 +18,9 @@ void help() {
         << "--fan 1000        Set fan to 1000 rpm\n"
         << "--power gaming    Enable gaming power mode\n"
         << "--power balanced  Enable balanced power mode\n"
-        << "--power creator   Enable creator power mode\n";
+        << "--power creator   Enable creator power mode\n"
+        << "--brightness n    Set keyboard brightness to n (0-255)\n"
+        << "--brightness      Get keyboard brightness\n";
 }
 
 
@@ -27,10 +29,6 @@ int main(int argc, char *argv[]) {
     srand(time(0));
     if (!fs::exists(DRIVER_DIR)) {
         std::cout << "Razercontrol module is not loaded!\n";
-        return 1;
-    }
-    if (getuid()) {
-        std::cout << "Must be run as ROOT!\n";
         return 1;
     }
     for(auto& p: fs::directory_iterator(DRIVER_DIR)) {

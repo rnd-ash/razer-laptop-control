@@ -63,7 +63,7 @@ UpdateType:
 
 # Compiler info
 Compiler: /usr/bin/c++
-CompilerVersion: 9.2.0
+CompilerVersion: 9.2.1
 
 # Dynamic analysis (MemCheck)
 PurifyCommand: 
