@@ -1,8 +1,5 @@
 #!/bin/bash
 
-/usr/bin/cp -f 99-razer-laptop-control.rules /etc/udev/rules.d/
-
-echo "IMPORTANT"
-echo "ADD YOURSELF TO plugdev GROUP:"
-echo ""
-echo "sudo usermod -a -G plugdev \$USER"
+/usr/bin/cp -f 99-razerlc.rules razer_perms.sh /etc/udev/rules.d/
+chmod +x /etc/udev/rules.d/razer_perms.sh
+udevadm control --reload-rules && udevadm trigger

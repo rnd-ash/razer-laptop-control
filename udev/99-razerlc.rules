@@ -1,0 +1,2 @@
+DRIVER=="Razer laptop System control driver", \
+SUBSYSTEM=="hid", RUN+="/bin/bash -x /etc/udev/rules.d/razer_perms.sh $env{DEVPATH} $kernel"

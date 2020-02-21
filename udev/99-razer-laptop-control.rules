@@ -1,4 +1,0 @@
-DRIVER=="Razer laptop System control driver", \
-SUBSYSTEM=="hid", \
-GROUP="plugdev", \
-MODE:="0666"
