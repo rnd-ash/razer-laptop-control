@@ -30,7 +30,7 @@ driver_dkms:
 	install -m 644 -v -D dkms.conf $(DESTDIR)/usr/src/$(DKMS_NAME)-$(DKMS_VER)/dkms.conf
 	install -m 755 -v -d src $(DESTDIR)/usr/src/$(DKMS_NAME)-$(DKMS_VER)/src
 	install -m 644 -v -D src/*.c $(DESTDIR)/usr/src/$(DKMS_NAME)-$(DKMS_VER)/src/
-	install -m 644 -v -D src/*.h$(DESTDIR) /usr/src/$(DKMS_NAME)-$(DKMS_VER)/src/
+	install -m 644 -v -D src/*.h $(DESTDIR)/usr/src/$(DKMS_NAME)-$(DKMS_VER)/src/
 	install -m 644 -v -D src/Makefile $(DESTDIR)/usr/src/$(DKMS_NAME)-$(DKMS_VER)/src/
 	rm -rf $(DESTDIR)/usr/src/$(DKMS_NAME)-$(DKMS_VER)/src/*.mod.c
 
