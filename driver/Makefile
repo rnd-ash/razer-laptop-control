@@ -37,7 +37,7 @@ driver_dkms:
 
 remove_dkms:
 	@echo "Removing dkms module"
-	rm -rf /usr/src/$(DKMS_NAME)_$(DKMS_VER)
+	rm -rf $(DESTDIR)/usr/src/$(DKMS_NAME)_$(DKMS_VER)
 
 clean: driver_clean
 
