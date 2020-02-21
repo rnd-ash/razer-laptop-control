@@ -34,6 +34,6 @@ struct razer_packet {
 char *getDeviceDescription(int product_id);
 void crc(char *buffer);
 int send_payload(struct usb_device *usb_dev, char *buffer, unsigned long minWait, unsigned long maxWait);
-
+int recv_payload(struct usb_device *usb_dev, char *req_buffer, char* resp_buffer, unsigned long minWait, unsigned long maxWait);
 
 #endif

@@ -68,6 +68,31 @@ static ssize_t brightness_store(struct device *dev, struct device_attribute *att
 	return count;
 }
 
+static ssize_t brightness_show(struct device *dev, struct device_attribute *attr,
+			    char *buf)
+{
+	int i;
+	struct razer_laptop *laptop;
+	laptop = dev_get_drvdata(dev);
+	dev_warn(dev, "Reading brightness");
+	char req[90];
+	char resp[90];
+	memset(resp, 0x00, sizeof(resp));
+	memset(req, 0x00, sizeof(req));
+	req[1] = 0x1f;
+	req[5] = 0x02;
+	req[6] = 0x0E;
+	req[7] = 0x84;
+	req[8] = 0x01;
+	recv_payload(laptop->usb_dev, req, resp, 800, 1000);
+
+	for (i = 0; i < 20; i++) {
+		dev_warn(dev, "%02X", resp[i]);
+	}
+
+	return sprintf(buf, "%d\n", (__u8)resp[9]);
+}
+
 /**
  * Called on reading fan_rpm sysfs entry
  */
@@ -264,7 +289,7 @@ static ssize_t power_mode_store(struct device *dev,
 static DEVICE_ATTR_RW(fan_rpm);
 static DEVICE_ATTR_RW(power_mode);
 static DEVICE_ATTR_WO(key_colour_map);
-static DEVICE_ATTR_WO(brightness);
+static DEVICE_ATTR_RW(brightness);
 
 // Called on load module
 static int razer_laptop_probe(struct hid_device *hdev,

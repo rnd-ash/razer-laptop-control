@@ -3,7 +3,6 @@
 int sendRowDataToProfile(struct usb_device *usb, int row_number, char* row_bytes) {
     char buffer[90];
     struct razer_packet packet;
-    int i;
     memset(buffer, 0x00, sizeof(buffer));
     memset(&packet, 0x00, sizeof(packet));
     packet.dev = 0x1f;
@@ -16,7 +15,7 @@ int sendRowDataToProfile(struct usb_device *usb, int row_number, char* row_bytes
     packet.args[3] = 0x0f;
     memcpy(&packet.args[7], &row_bytes[0], 45);
     memcpy(buffer, &packet, 90);
-    return send_payload(usb, buffer, 1000, 2000);
+    return send_payload(usb, buffer, 800, 1000);
 }
 
 int displayProfile(struct usb_device *usb, int profileNum) {
