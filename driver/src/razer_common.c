@@ -13,7 +13,7 @@
 MODULE_AUTHOR("Ashcon Mohseninia");
 MODULE_DESCRIPTION("Razer system control driver for laptops");
 MODULE_LICENSE("GPL");
-MODULE_VERSION("1.0.1");
+MODULE_VERSION("1.0.2");
 
 /**
  * Function to send RGB data to keyboard to display
@@ -50,15 +50,19 @@ static ssize_t key_colour_map_store(struct device *dev, struct device_attribute 
 
 static ssize_t brightness_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
 	struct razer_laptop *laptop;
-	laptop = dev_get_drvdata(dev);
 	unsigned long brightness;
+	laptop = dev_get_drvdata(dev);
 	if (kstrtol(buf, 10, &brightness)) { // Convert users input to integer
+		#ifdef DEBUG
 		dev_warn(dev, "User entered an invalid input for brightness");
+		#endif
 		return -EINVAL;
 	}
 
 	if (brightness > 255 || brightness < 0) {
+		#ifdef DEBUG
 		dev_warn(dev, "User entered an invalid input for brightness");
+		#endif
 		return -EINVAL;
 	}
 
@@ -73,10 +77,12 @@ static ssize_t brightness_show(struct device *dev, struct device_attribute *attr
 {
 	int i;
 	struct razer_laptop *laptop;
-	laptop = dev_get_drvdata(dev);
-	dev_warn(dev, "Reading brightness");
 	char req[90];
 	char resp[90];
+	laptop = dev_get_drvdata(dev);
+	#ifdef DEBUG
+	dev_warn(dev, "Reading brightness");
+	#endif
 	memset(resp, 0x00, sizeof(resp));
 	memset(req, 0x00, sizeof(req));
 	req[1] = 0x1f;
@@ -135,13 +141,16 @@ static ssize_t fan_rpm_store(struct device *dev, struct device_attribute *attr,
 
 	memset(buffer, 0x00, sizeof(buffer));
 	if (kstrtol(buf, 10, &x)) { // Convert users input to integer
+		#ifdef DEBUG
 		dev_warn(dev, "User entered an invalid input for fan rpm. Defaulting to auto");
+		#endif
 		request_fan_speed = 0;
 	}
 	if (x != 0) {
 		request_fan_speed = clamp_fan_rpm(x, laptop->product_id);
-		dev_info(dev, "Requesting MANUAL fan at %d RPM",
-			 ((int) request_fan_speed * 100));
+		#ifdef DEBUG
+		dev_info(dev, "Requesting MANUAL fan at %d RPM", ((int) request_fan_speed * 100));
+		#endif
 		laptop->fan_rpm = request_fan_speed * 100;
 		// All packets
 		buffer[0] = 0x00;
@@ -190,7 +199,9 @@ static ssize_t fan_rpm_store(struct device *dev, struct device_attribute *attr,
 		buffer[11] = 0x00;
 		send_payload(laptop->usb_dev, buffer, 3400, 3800);
 	} else {
+		#ifdef DEBUG
 		dev_info(dev, "Requesting AUTO Fan");
+		#endif
 		laptop->fan_rpm = 0;
 	}
 
@@ -240,25 +251,33 @@ static ssize_t power_mode_store(struct device *dev,
 	mutex_lock(&laptop->lock);
 
 	if (kstrtol(buf, 10, &x)) {
-		dev_warn(dev,
-			 "User entered an invalid input for power mode. Defaulting to balanced");
-		x = 0;
+		#ifdef DEBUG
+		dev_warn(dev, "User entered an invalid input for power mode. Defaulting to balanced");
+		#endif
+		return -EINVAL;
 	}
 	if (x == 1 || x == 0 || x == 2) {
 		char buffer[90];
 
+		#ifdef DEBUG
 		if (x == 0) {
 			dev_info(dev, "%s", "Enabling Balanced power mode");
-		} else if (x == 2 &&
-			   creator_mode_allowed(laptop->product_id) == 1) {
+		} else if (x == 2 && creator_mode_allowed(laptop->product_id) == 1) {
 			dev_info(dev, "%s", "Enabling Gaming power mode");
 		} else if (x == 1) {
 			dev_info(dev, "%s", "Enabling Gaming power mode");
 		} else {
 			x = 1;
-			dev_warn(dev, "%s",
-				 "Creator mode not allowed, falling back to performance");
+			#ifdef DEBUG
+			dev_warn(dev, "%s", "Creator mode not allowed, falling back to performance");
+			#endif
+			x = 1;
 		}
+		#else
+		if (x == 2 && creator_mode_allowed(laptop->product_id) == 0) {
+			x = 1;
+		}
+		#endif
 		laptop->gaming_mode = x;
 		memset(buffer, 0x00, sizeof(buffer));
 		// All packets
@@ -315,8 +334,7 @@ static int razer_laptop_probe(struct hid_device *hdev,
 		kfree(dev);
 		return -ENODEV;
 	}
-	dev_info(&intf->dev, "Found supported device: %s\n",
-		 getDeviceDescription(dev->product_id));
+	dev_info(&intf->dev, "Found supported device: %s\n", getDeviceDescription(dev->product_id));
 	device_create_file(&hdev->dev, &dev_attr_fan_rpm);
 	device_create_file(&hdev->dev, &dev_attr_power_mode);
 	device_create_file(&hdev->dev, &dev_attr_key_colour_map);
@@ -332,8 +350,7 @@ static int razer_laptop_probe(struct hid_device *hdev,
 		kfree(dev);
 		return -ENODEV;
 	}
-	dev_info(&intf->dev, "Found supported device: %s\n",
-		 getDeviceDescription(dev->product_id));
+	dev_info(&intf->dev, "Found supported device: %s\n", getDeviceDescription(dev->product_id));
 
 	return 0;
 }
