@@ -39,9 +39,8 @@ static ssize_t key_colour_map_store(struct device *dev, struct device_attribute 
 	}
 	mutex_lock(&laptop->lock);
 	for (i = 0; i <= 5; i++) {
-		char bytes[45];
-		memcpy(&bytes[0], &buf[i*45] ,45);
-		sendRowDataToProfile(laptop->usb_dev, i, bytes);
+		memcpy(&matrix[i].keys, &buf[i*45], 45);
+		sendRowDataToProfile(laptop->usb_dev, i);
 	}
 	displayProfile(laptop->usb_dev, 0);
 	mutex_unlock(&laptop->lock);
@@ -317,7 +316,7 @@ static int razer_laptop_probe(struct hid_device *hdev,
 	struct usb_interface *intf = to_usb_interface(hdev->dev.parent);
 	struct usb_device *usb_dev = interface_to_usbdev(intf);
 	struct razer_laptop *dev;
-
+	int c;
 	dev = kzalloc(sizeof(struct razer_laptop), GFP_KERNEL);
 	if (!dev)
 		return -ENOMEM;
@@ -351,7 +350,10 @@ static int razer_laptop_probe(struct hid_device *hdev,
 		return -ENODEV;
 	}
 	dev_info(&intf->dev, "Found supported device: %s\n", getDeviceDescription(dev->product_id));
-
+	for (c=0; c <=5; c++) {
+		memset(matrix[c].keys, 0xFF, sizeof(matrix[c].keys));	
+	}
+	displayMatrix(usb_dev);
 	return 0;
 }
 

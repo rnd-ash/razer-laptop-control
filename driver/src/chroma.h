@@ -27,7 +27,7 @@ struct key_colour { // I'm British. colour is spelt like this and not 'color' :)
 struct row_data {
     int row_id;
     int profileNumber;
-    struct key_colour keys[15];
+    struct key_colour keys[15]; // White default colour
 };
 
 /**
@@ -37,7 +37,7 @@ struct row_data {
  * @param buffer;
  * @param usb USB device of keyboard
  */
-int sendRowDataToProfile(struct usb_device *usb, int row_number, char* row_bytes);
+int sendRowDataToProfile(struct usb_device *usb, int row_number);
 
 /**
  * Tells the keyboard to display whatever data is stored for a given profile number
@@ -46,6 +46,14 @@ int sendRowDataToProfile(struct usb_device *usb, int row_number, char* row_bytes
  */
 int displayProfile(struct usb_device *usb, int profileNum);
 
+/**
+ * Sets the keyboard to the content of [matrix]
+ */
+int displayMatrix(struct usb_device *usb);
 
 int sendBrightness(struct usb_device *usb, __u8 brightness);
+
+extern struct row_data matrix[5];
+
 #endif
+

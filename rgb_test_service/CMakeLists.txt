@@ -10,4 +10,4 @@ add_executable(rgb_test src/main.cpp src/power_fan_control.cpp src/keyboard.cpp 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
 include(CPack)
-target_link_libraries(rgb_test X11)
+target_link_libraries(rgb_test X11 notify)

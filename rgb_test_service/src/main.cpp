@@ -7,10 +7,11 @@
 #include "effects.h"
 #include <ctime>
 
-
 #define DRIVER_DIR "/sys/module/razercontrol/drivers/hid:Razer laptop System control driver"
 
 namespace fs = std::filesystem;
+
+
 
 void help() {
     std::cout << "Incorrect usage!:\n\n"

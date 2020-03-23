@@ -1,4 +1,4 @@
-//#define DEBUG
+#define DEBUG
 
 // Razer Vendor ID
 #define RAZER_VENDOR_ID 0x1532

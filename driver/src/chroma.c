@@ -1,6 +1,17 @@
 #include "chroma.h"
 
-int sendRowDataToProfile(struct usb_device *usb, int row_number, char* row_bytes) {
+struct row_data matrix[5];
+
+
+int displayMatrix(struct usb_device *usb) {
+    int row;
+    for (row=0; row<=5; row++) {
+        sendRowDataToProfile(usb, row);
+    }
+    return 0;
+}
+
+int sendRowDataToProfile(struct usb_device *usb, int row_number) {
     char buffer[90];
     struct razer_packet packet;
     memset(buffer, 0x00, sizeof(buffer));
@@ -13,7 +24,7 @@ int sendRowDataToProfile(struct usb_device *usb, int row_number, char* row_bytes
     packet.args[0] = 0xff;
     packet.args[1] = row_number;
     packet.args[3] = 0x0f;
-    memcpy(&packet.args[7], &row_bytes[0], 45);
+    memcpy(&packet.args[7], &matrix[row_number].keys, 45);
     memcpy(buffer, &packet, 90);
     return send_payload(usb, buffer, 800, 1000);
 }
@@ -50,5 +61,8 @@ int sendBrightness(struct usb_device *usb, __u8 brightness) {
     packet.args[1] = 0x05;
     packet.args[2] = brightness;
     memcpy(buffer, &packet, 90);
+    #ifdef DEBUG
+    hid_err(usb, "Setting brightness to %d", brightness);
+    #endif
     return send_payload(usb, buffer, 1000, 2000);
 }
