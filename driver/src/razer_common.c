@@ -8,7 +8,12 @@
 #include "defines.h"
 #include "core.h"
 #include "chroma.h"
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
 
+
+
+#define PROCFS_DIR ""
 
 MODULE_AUTHOR("Ashcon Mohseninia");
 MODULE_DESCRIPTION("Razer system control driver for laptops");
@@ -303,11 +308,33 @@ static ssize_t power_mode_store(struct device *dev,
 	return retval;
 }
 
+static ssize_t proc_read(struct file *file, char __user *ubuf,size_t count, loff_t *ppos) {
+	return 0;
+}
+
+static ssize_t proc_write(struct file *file, const char __user *ubuf,size_t count, loff_t *ppos) {
+	return -1;
+}
+
+
 // Set our device attributes in sysfs
 static DEVICE_ATTR_RW(fan_rpm);
 static DEVICE_ATTR_RW(power_mode);
 static DEVICE_ATTR_WO(key_colour_map);
 static DEVICE_ATTR_RW(brightness);
+
+// For proc_fs
+static struct proc_dir_entry *procfolder;
+static struct proc_dir_entry *procfan;
+static struct proc_dir_entry *procBrightness;
+static struct proc_dir_entry *procpower;
+static struct proc_dir_entry *procrgb;
+
+static const struct file_operations proc_fops = {
+    .owner = THIS_MODULE,
+    .read = proc_read,
+    .write = proc_write,
+};
 
 // Called on load module
 static int razer_laptop_probe(struct hid_device *hdev,
@@ -353,7 +380,25 @@ static int razer_laptop_probe(struct hid_device *hdev,
 	for (c=0; c <=5; c++) {
 		memset(matrix[c].keys, 0xFF, sizeof(matrix[c].keys));	
 	}
-	displayMatrix(usb_dev);
+
+	// Check if the first USB device from the laptop
+	// Already init the procfs File, if so, skip
+	if (procfolder != NULL) {
+		return 0;
+	}
+
+	// Now init proc_fs
+	procfolder = proc_mkdir(PROC_FS_DIR_NAME, NULL);
+	if (procfolder == NULL) {
+		proc_remove(procfolder);
+		hid_err(hdev, "Failed to setup procFS!");
+		kfree(dev);
+		return -ENOMEM;
+	}
+	procfan = proc_create(PROC_FS_FAN_NAME, 0666, procfolder, &proc_fops);
+	procrgb = proc_create(PROC_FS_RGB_MAP_NAME, 0666, procfolder, &proc_fops);
+	procpower = proc_create(PROC_FS_POWER_NAME, 0666, procfolder, &proc_fops);
+	procBrightness = proc_create(PROC_FS_KBD_BRIGHTNESS_NAME, 0666, procfolder, &proc_fops);
 	return 0;
 }
 
@@ -368,6 +413,11 @@ static void razer_laptop_remove(struct hid_device *hdev)
 	device_remove_file(&hdev->dev, &dev_attr_power_mode);
 	device_remove_file(&hdev->dev, &dev_attr_key_colour_map);
 	device_remove_file(&hdev->dev, &dev_attr_brightness);
+	proc_remove(procpower);
+	proc_remove(procrgb);
+	proc_remove(procfan);
+	proc_remove(procBrightness);
+	proc_remove(procfolder);
 	hid_hw_stop(hdev);
 	kfree(dev);
 	dev_info(&intf->dev, "Razer_laptop_control: Unloaded\n");
