@@ -17,8 +17,8 @@ sudo rmmod razerkbd
 ```
 cd driver
 sudo make driver_dkms
-sudo dkms add -m razercontrol -v 0.0.1
-sudo dkms build -m razercontrol -v 0.0.1
+sudo dkms add -m razercontrol -v 1.0.2
+sudo dkms build -m razercontrol -v 1.0.2
 ```
 After this, you MUST Rebuild your initramfs and reboot. The module will now be persistent
 ## OK Driver installed, how do I use this?
