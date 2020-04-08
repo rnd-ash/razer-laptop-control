@@ -20,6 +20,7 @@ struct razer_laptop {
 	int gaming_mode;		// Gaming mode (0 = Balanced) (1 = Gaming AKA Higher CPU TDP)
 };
 
+static struct razer_laptop laptop;
 
 struct razer_packet {
     __u8 __res;

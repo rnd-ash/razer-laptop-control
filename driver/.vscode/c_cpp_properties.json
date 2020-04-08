@@ -1,0 +1,21 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/usr/lib/modules/5.5.15-1-ck-skylake/build/include/**",
+                "/usr/include",
+                "/usr/local/include"
+            ],
+            "defines": [
+                "__KERNEL__"
+            ],
+            "compilerPath": "/usr/bin/gcc",
+            "intelliSenseMode": "gcc-x64",
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        }
+    ],
+    "version": 4
+}

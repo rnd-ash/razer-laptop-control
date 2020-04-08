@@ -28,8 +28,5 @@
 #define BLADE_QHD 0x020F
 
 #define PROC_FS_DIR_NAME "razer-laptop"
-#define PROC_FS_FAN_NAME "fan"
-#define PROC_FS_POWER_NAME "performance"
-#define PROC_FS_KBD_BRIGHTNESS_NAME "kbd_brightness"
-#define PROC_FS_RGB_MAP_NAME "kbd_map"
+#define PROC_FS_DAEMON_NAME "daemon"
 #define PROCFS_MAX_SIZE 1024
