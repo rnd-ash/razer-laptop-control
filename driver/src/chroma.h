@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 
-#ifndef CHROMA_H_
-#define CHROMA_H_
+#ifndef RAZER_CHROMA_H_
+#define RAZER_CHROMA_H_
 
 #include <linux/hid.h>
 #include <linux/usb/input.h>

@@ -1,26 +1,31 @@
 // SPDX-License-Identifier: GPL-2.0
 
-#ifndef CORE_H_
-#define CORE_H_
+#ifndef RAZER_CORE_H_
+#define RAZER_CORE_H_
 
 #include <linux/hid.h>
 #include <linux/usb/input.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/module.h>
-#include "fancontrol.h"
+
 #include "defines.h"
 
+
+typedef enum PERF_MODE { 
+    NORMAL = 0,
+    GAMING = 1, 
+    CREATOR = 2,
+} PERF_MODE;
+
 // Struct to hold some basic data about the laptops current state
-struct razer_laptop {
+typedef struct razer_laptop {
 	int product_id;			// Product ID
 	struct usb_device *usb_dev;	// USB Device we wish to talk to
 	struct mutex lock;		// Mutex
 	int fan_rpm;			// Fan RPM of manual mod (0 = AUTO)
-	int gaming_mode;		// Gaming mode (0 = Balanced) (1 = Gaming AKA Higher CPU TDP)
-};
-
-static struct razer_laptop laptop;
+	PERF_MODE power;		// Gaming mode 0 = Balanced, 1 = Gaming, 2 = Creator mode
+} razer_laptop;
 
 struct razer_packet {
     __u8 __res;

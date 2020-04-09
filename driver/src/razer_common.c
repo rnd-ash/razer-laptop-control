@@ -4,20 +4,56 @@
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/module.h>
-#include "fancontrol.h"
-#include "defines.h"
-#include "core.h"
-#include "chroma.h"
 #include <linux/proc_fs.h>
 #include <linux/seq_file.h>
 
-// Used to prevent second USB device from loading the driver
-static bool loaded = false;
+#include "chroma.h"
+#include "fancontrol.h"
+
+
+static struct razer_laptop laptop;
 
 MODULE_AUTHOR("Ashcon Mohseninia");
 MODULE_DESCRIPTION("Razer laptop driver");
 MODULE_LICENSE("GPL");
 MODULE_VERSION("1.1.0");
+
+// SYSFS Folders (for device)
+
+static ssize_t power_mode_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
+	setPower(&laptop, 1);
+	return count;
+}
+
+static ssize_t fan_rpm_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
+	return count;
+}
+
+static ssize_t fan_rpm_show(struct device *dev, struct device_attribute *attr, char *buf) {
+	switch(laptop.fan_rpm) {
+		case 0:
+			return sprintf(buf, "Fan auto\n");
+		default:
+			return sprintf(buf, "Fan %d rpm\n", laptop.fan_rpm);
+	}
+}
+
+static ssize_t power_mode_show(struct device *dev, struct device_attribute *attr, char *buf) {
+	switch(laptop.power) {
+		case NORMAL:
+			return sprintf(buf, "Power mode: Normal\n");
+		case GAMING:
+			return sprintf(buf, "Power mode: Gaming\n");
+		case CREATOR:
+			return sprintf(buf, "Power mode: Creator\n");
+		default:
+			return sprintf(buf, "Power mode: Unknown\n");
+	}
+}
+
+static DEVICE_ATTR_RW(fan_rpm);
+static DEVICE_ATTR_RW(power_mode);
+
 
 // Called upon Daemon reading from procfs
 static ssize_t proc_read(struct file *file, char __user *ubuf, size_t count, loff_t *ppos) {
@@ -89,23 +125,35 @@ static struct led_classdev kbd_backlight = {
 static int razer_laptop_probe(struct hid_device *hdev,
 			      const struct hid_device_id *id)
 {
-	// If this is not null, then the first USB device of the laptop has already claimed the driver
-	if (loaded) {
-		return 0;
-	}
-
 	struct usb_interface *intf = to_usb_interface(hdev->dev.parent);
 	struct usb_device *usb_dev = interface_to_usbdev(intf);
 	struct razer_laptop *dev;
 	int c;
 	dev = kzalloc(sizeof(struct razer_laptop), GFP_KERNEL);
-	if (!dev)
+	if (!dev) {
 		return -ENOMEM;
+	}
+
+	/*	Razer are strange when it comes to laptop keyboards
+		The keyboard has a controller that has 3 USB devices, that all have different
+		names but all point to the same controller, and all 3 can accept the same USB commands.
+
+		So to avoid useless loading on all the devices (unnecessary), check if the proc folder has
+		been created, if it has, then one of the devices has already loaded the driver,
+		so don't load on the new devices
+	*/
+	if (procfolder != NULL) {
+		#ifdef DEBUG
+		hid_err(hdev, "Not allowing secondary USB controller to take ownership\n");
+		#endif
+		kfree(dev);
+		return -ENODEV;
+	}
 
 	mutex_init(&dev->lock);
 	dev->usb_dev = usb_dev;
 	dev->fan_rpm = 0;
-	dev->gaming_mode = 0;
+	dev->power = NORMAL;
 	dev->product_id = hdev->product;
 
 	laptop = *dev;
@@ -134,7 +182,7 @@ static int razer_laptop_probe(struct hid_device *hdev,
 		memset(matrix[c].keys, 0xFF, sizeof(matrix[c].keys));	
 	}
 
-	// Now init proc_fs
+	// Now init proc_fs and sysfs
 	procfolder = proc_mkdir(PROC_FS_DIR_NAME, NULL);
 	if (procfolder == NULL) {
 		proc_remove(procfolder);
@@ -144,9 +192,11 @@ static int razer_laptop_probe(struct hid_device *hdev,
 	}
 	procDaemon = proc_create(PROC_FS_DAEMON_NAME, 0666, procfolder, &proc_fops);
 
+	device_create_file(&hdev->dev, &dev_attr_fan_rpm);
+	device_create_file(&hdev->dev, &dev_attr_power_mode);
+
 	// Register LED interface for Keyboard
 	led_classdev_register(hdev->dev.parent, &kbd_backlight);
-	loaded = true;
 	return 0;
 }
 
@@ -155,16 +205,15 @@ static void razer_laptop_remove(struct hid_device *hdev)
 {
 	struct device *dev;
 	struct usb_interface *intf = to_usb_interface(hdev->dev.parent);
-	if (loaded) {
-		dev = hid_get_drvdata(hdev);
-		led_classdev_unregister(&kbd_backlight);
-		proc_remove(procDaemon);
-		proc_remove(procfolder);
-		hid_hw_stop(hdev);
-		kfree(dev);
-		dev_info(&intf->dev, "Razer_laptop_control: Unloaded\n");
-		loaded = false;
-	}
+	dev = hid_get_drvdata(hdev);
+	device_remove_file(&hdev->dev, &dev_attr_fan_rpm);
+	device_remove_file(&hdev->dev, &dev_attr_power_mode);
+	led_classdev_unregister(&kbd_backlight);
+	proc_remove(procDaemon);
+	proc_remove(procfolder);
+	hid_hw_stop(hdev);
+	kfree(dev);
+	dev_info(&intf->dev, "Razer_laptop_control: Unloaded\n");
 }
 
 MODULE_DEVICE_TABLE(hid, table);
