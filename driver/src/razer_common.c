@@ -135,22 +135,6 @@ static int razer_laptop_probe(struct hid_device *hdev,
 		return -ENOMEM;
 	}
 
-	/*	Razer are strange when it comes to laptop keyboards
-		The keyboard has a controller that has 3 USB devices, that all have different
-		names but all point to the same controller, and all 3 can accept the same USB commands.
-
-		So to avoid useless loading on all the devices (unnecessary), check if the proc folder has
-		been created, if it has, then one of the devices has already loaded the driver,
-		so don't load on the new devices
-	*/
-	if (procfolder != NULL) {
-		#ifdef DEBUG
-		hid_err(hdev, "Not allowing secondary USB controller to take ownership\n");
-		#endif
-		kfree(dev);
-		return -ENODEV;
-	}
-
 	mutex_init(&dev->lock);
 	dev->usb_dev = usb_dev;
 	dev->fan_rpm = 0;
@@ -166,6 +150,24 @@ static int razer_laptop_probe(struct hid_device *hdev,
 		return -ENODEV;
 	}
 	dev_info(&intf->dev, "Found supported device: %s\n", getDeviceDescription(dev->product_id));
+	
+	// sysfs - for each USB device
+	device_create_file(&hdev->dev, &dev_attr_fan_rpm);
+	device_create_file(&hdev->dev, &dev_attr_power_mode);
+
+	// Procfs and LED initilization, only do this once!
+	if (procfolder == NULL) {
+		procfolder = proc_mkdir(PROC_FS_DIR_NAME, NULL);
+		if (procfolder == NULL) {
+			proc_remove(procfolder);
+			hid_err(hdev, "Failed to setup procFS!");
+			kfree(dev);
+			return -ENOMEM;
+		}
+		led_classdev_register(hdev->dev.parent, &kbd_backlight);
+		procDaemon = proc_create(PROC_FS_DAEMON_NAME, 0666, procfolder, &proc_fops);
+	}
+	
 	hid_set_drvdata(hdev, dev);
 	if (hid_parse(hdev)) {
 		hid_err(hdev, "Failed to parse device!\n");
@@ -182,22 +184,6 @@ static int razer_laptop_probe(struct hid_device *hdev,
 	for (c=0; c <=5; c++) {
 		memset(matrix[c].keys, 0xFF, sizeof(matrix[c].keys));	
 	}
-
-	// Now init proc_fs and sysfs
-	procfolder = proc_mkdir(PROC_FS_DIR_NAME, NULL);
-	if (procfolder == NULL) {
-		proc_remove(procfolder);
-		hid_err(hdev, "Failed to setup procFS!");
-		kfree(dev);
-		return -ENOMEM;
-	}
-	procDaemon = proc_create(PROC_FS_DAEMON_NAME, 0666, procfolder, &proc_fops);
-
-	device_create_file(&hdev->dev, &dev_attr_fan_rpm);
-	device_create_file(&hdev->dev, &dev_attr_power_mode);
-
-	// Register LED interface for Keyboard
-	led_classdev_register(hdev->dev.parent, &kbd_backlight);
 	return 0;
 }
 
@@ -209,9 +195,11 @@ static void razer_laptop_remove(struct hid_device *hdev)
 	dev = hid_get_drvdata(hdev);
 	device_remove_file(&hdev->dev, &dev_attr_fan_rpm);
 	device_remove_file(&hdev->dev, &dev_attr_power_mode);
-	led_classdev_unregister(&kbd_backlight);
-	proc_remove(procDaemon);
-	proc_remove(procfolder);
+	if (procfolder != NULL) {
+		led_classdev_unregister(&kbd_backlight);
+		proc_remove(procDaemon);
+		proc_remove(procfolder);
+	}
 	hid_hw_stop(hdev);
 	kfree(dev);
 	dev_info(&intf->dev, "Razer_laptop_control: Unloaded\n");
