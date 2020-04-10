@@ -13,7 +13,7 @@
 MODULE_AUTHOR("Ashcon Mohseninia");
 MODULE_DESCRIPTION("Razer system control driver for laptops");
 MODULE_LICENSE("GPL");
-MODULE_VERSION("1.0.2");
+MODULE_VERSION("1.0.3");
 
 /**
  * Function to send RGB data to keyboard to display
