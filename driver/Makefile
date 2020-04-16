@@ -4,7 +4,7 @@ DRIVERDIR?=$(shell pwd)/src
 MODULEDIR?=/lib/modules/$(shell uname -r)/kernel/hid
 
 DKMS_NAME?=razercontrol
-DKMS_VER?=1.0.3
+DKMS_VER?=1.0.4
 
 MY_CFLAGS += -g -DDEBUG
 ccflags-y += ${MY_CFLAGS}

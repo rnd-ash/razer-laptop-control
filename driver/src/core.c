@@ -34,6 +34,10 @@ char *getDeviceDescription(int product_id)
 		return "Blade Stealth late 2017";
 	case BLADE_2017_STEALTH_MID:
 		return "Blade Stealth mid 2017";
+	case BLADE_2019_STEALTH_GTX:
+		return "Blade Stealth late 2019 (GTX)";
+	case BLADE_2019_BASE:
+		return "Blade 15 2019 Base";
 	case BLADE_QHD:
 		return "Blade QHD";
 	default:
