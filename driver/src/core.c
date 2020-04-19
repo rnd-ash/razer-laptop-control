@@ -18,12 +18,16 @@ char *getDeviceDescription(int product_id)
 		return "Blade 15 2018 Mercury Edition";
 	case BLADE_2018_PRO_FHD:
 		return "Blade pro 2018 FHD";
+	case BLADE_2019_BASE:
+		return "Blade 15 2019 Base";
 	case BLADE_2019_ADV:
 		return "Blade 15 2019 Advanced";
 	case BLADE_2019_MERC:
 		return "Blade 15 2019 Mercury Edition";
 	case BLADE_2019_STEALTH:
 		return "Blade 2019 Stealth";
+	case BLADE_2019_STEALTH_GTX:
+		return "Blade 2019 Stealth (GTX)";
 	case BLADE_PRO_2019:
 		return "Blade pro 2019";
 	case BLADE_2016_PRO:
