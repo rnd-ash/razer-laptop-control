@@ -71,10 +71,9 @@ static ssize_t proc_write(struct file *file, const char __user *ubuf,size_t coun
 static struct proc_dir_entry *procfolder;
 static struct proc_dir_entry *procDaemon;
 
-static const struct file_operations proc_fops = {
-    .owner = THIS_MODULE,
-    .read = proc_read,
-    .write = proc_write,
+static const struct proc_ops proc_fops = {
+    .proc_read = proc_read,
+    .proc_write = proc_write,
 };
 
 
@@ -164,7 +163,7 @@ static int razer_laptop_probe(struct hid_device *hdev,
 			kfree(dev);
 			return -ENOMEM;
 		}
-		led_classdev_register(hdev->dev.parent, &kbd_backlight);
+		//led_classdev_register(hdev->dev.parent, &kbd_backlight);
 		procDaemon = proc_create(PROC_FS_DAEMON_NAME, 0666, procfolder, &proc_fops);
 	}
 	
@@ -196,9 +195,11 @@ static void razer_laptop_remove(struct hid_device *hdev)
 	device_remove_file(&hdev->dev, &dev_attr_fan_rpm);
 	device_remove_file(&hdev->dev, &dev_attr_power_mode);
 	if (procfolder != NULL) {
-		led_classdev_unregister(&kbd_backlight);
 		proc_remove(procDaemon);
 		proc_remove(procfolder);
+	}
+	if (&kbd_backlight) {
+		led_classdev_unregister(&kbd_backlight);
 	}
 	hid_hw_stop(hdev);
 	kfree(dev);
