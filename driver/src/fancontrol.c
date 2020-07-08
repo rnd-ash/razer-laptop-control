@@ -50,6 +50,7 @@ int creator_mode_allowed(__u32 product_id)
 }
 
 void set_fan_rpm(unsigned long x, struct razer_laptop *laptop) {
+    mutex_lock(&laptop->lock);
     u8 request_fan_speed;
     char buffer[90] = {0x00};
     if (x != 0) {
@@ -125,4 +126,35 @@ void set_fan_rpm(unsigned long x, struct razer_laptop *laptop) {
         buffer[11] = 0x00;
         send_payload(laptop->usb_dev, buffer, 0, 0);
     }
+    mutex_unlock(&laptop->lock);
+}
+
+int set_power_mode(unsigned long x, struct razer_laptop *laptop) {
+    mutex_lock(&laptop->lock);
+    if (x >= 0 && x <= 2) {
+        char buffer[90];
+        // Device doesn't support creator mode
+        if (x == 2 && !creator_mode_allowed(laptop->product_id)) {
+            x = 1;
+        }
+
+        laptop->power_mode = x;
+        memset(buffer, 0x00, sizeof(buffer));
+        // All packets
+        buffer[0] = 0x00;
+        buffer[1] = 0x1f;
+        buffer[2] = 0x00;
+        buffer[3] = 0x00;
+        buffer[4] = 0x00;
+
+        buffer[5] = 0x04;
+        buffer[6] = 0x0d;
+        buffer[7] = 0x02;
+        buffer[8] = 0x00;
+        buffer[9] = 0x01;
+        buffer[10] = laptop->power_mode;
+        buffer[11] = laptop->fan_rpm != 0 ? 0x01 : 0x00; // Custom RPM?
+        send_payload(laptop->usb_dev, buffer, 0, 0);
+    }
+    mutex_unlock(&laptop->lock);
 }

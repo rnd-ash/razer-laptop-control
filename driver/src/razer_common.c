@@ -72,8 +72,7 @@ static ssize_t brightness_store(struct device *dev, struct device_attribute *att
 	return count;
 }
 
-static ssize_t brightness_show(struct device *dev, struct device_attribute *attr,
-			    char *buf)
+static ssize_t brightness_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
 	return sprintf(buf, "%d\n", (__u8)getBrightness(laptop.usb_dev));
 }
@@ -81,12 +80,11 @@ static ssize_t brightness_show(struct device *dev, struct device_attribute *attr
 /**
  * Called on reading fan_rpm sysfs entry
  */
-static ssize_t fan_rpm_show(struct device *dev, struct device_attribute *attr,
-			    char *buf)
+static ssize_t fan_rpm_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
 
 	if (laptop.fan_rpm == 0)
-		return sprintf(buf, "%s", "Automatic (0)\n");
+		return sprintf(buf, "%s", "Auto\n");
 
 	return sprintf(buf, "%d RPM\n", laptop.fan_rpm);
 }
@@ -94,8 +92,7 @@ static ssize_t fan_rpm_show(struct device *dev, struct device_attribute *attr,
 /**
  * Called on reading power_mode sysfs entry
  */
-static ssize_t power_mode_show(struct device *dev,
-			       struct device_attribute *attr, char *buf)
+static ssize_t power_mode_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
 
 	if (laptop.power_mode == 0)
@@ -106,20 +103,16 @@ static ssize_t power_mode_show(struct device *dev,
 	return sprintf(buf, "%s", "Creator (2)\n");
 }
 
-static ssize_t fan_rpm_store(struct device *dev, struct device_attribute *attr,
-			     const char *buf, size_t count)
+static ssize_t fan_rpm_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
 {
 	unsigned long x;
-
-	mutex_lock(&laptop.lock);
 	if (kstrtol(buf, 10, &x)) { // Convert users input to integer
-		#ifdef DEBUG
-		dev_warn(dev, "User entered an invalid input for fan rpm. Defaulting to auto");
+        #ifdef DEBUG
+		dev_warn(dev, "User entered an invalid input for fan rpm.");
         #endif
-		x = 0;
+		return -EINVAL;
 	}
 	set_fan_rpm(x, &laptop);
-    mutex_unlock(&laptop.lock);
 	return count;
 }
 
@@ -133,67 +126,18 @@ static ssize_t fan_rpm_store(struct device *dev, struct device_attribute *attr,
  * have to send the current fan control state as well within the message
  *
  */
-static ssize_t power_mode_store(struct device *dev,
-				struct device_attribute *attr,
-				const char *buf, size_t count)
+static ssize_t power_mode_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
 {
-	ssize_t retval = count;
 	unsigned long x;
-
-	mutex_lock(&laptop.lock);
-
 	if (kstrtol(buf, 10, &x)) {
 		#ifdef DEBUG
 		dev_warn(dev, "User entered an invalid input for power mode. Defaulting to balanced");
 		#endif
 		return -EINVAL;
 	}
-	if (x == 1 || x == 0 || x == 2) {
-		char buffer[90];
+	set_power_mode(x, &laptop);
 
-		#ifdef DEBUG
-		if (x == 0) {
-			dev_info(dev, "%s", "Enabling Balanced power mode");
-		} else if (x == 2 && creator_mode_allowed(laptop.product_id) == 1) {
-			dev_info(dev, "%s", "Enabling Gaming power mode");
-		} else if (x == 1) {
-			dev_info(dev, "%s", "Enabling Gaming power mode");
-		} else {
-			x = 1;
-			#ifdef DEBUG
-			dev_warn(dev, "%s", "Creator mode not allowed, falling back to performance");
-			#endif
-			x = 1;
-		}
-		#else
-		if (x == 2 && creator_mode_allowed(laptop->product_id) == 0) {
-			x = 1;
-		}
-		#endif
-		laptop.power_mode = x;
-		memset(buffer, 0x00, sizeof(buffer));
-		// All packets
-		buffer[0] = 0x00;
-		buffer[1] = 0x1f;
-		buffer[2] = 0x00;
-		buffer[3] = 0x00;
-		buffer[4] = 0x00;
-
-		buffer[5] = 0x04;
-		buffer[6] = 0x0d;
-		buffer[7] = 0x02;
-		buffer[8] = 0x00;
-		buffer[9] = 0x01;
-		buffer[10] = laptop.power_mode;
-		buffer[11] = laptop.fan_rpm != 0 ? 0x01 : 0x00;
-		send_payload(laptop.usb_dev, buffer, 0, 0);
-	} else {
-		retval = -EINVAL;
-	}
-
-	mutex_unlock(&laptop.lock);
-
-	return retval;
+	return count;
 }
 
 // Set our device attributes in sysfs
@@ -215,7 +159,7 @@ static struct led_classdev kbd_backlight = {
         .max_brightness = 255,
         .flags = LED_BRIGHT_HW_CHANGED,
         .brightness_set_blocking = &backlight_sysfs_set,
-        .brightness_get	= &backlight_sysfs_get
+        .brightness_get	= &backlight_sysfs_get,
 };
 
 // Called on module load
@@ -235,11 +179,12 @@ static int razer_laptop_probe(struct hid_device *hdev, const struct hid_device_i
     dev_info(&intf->dev, "Found supported laptop: %s\n", getDeviceDescription(hdev->product));
 
     mutex_init(&laptop.lock);
-    // When the driver first loads, we know these will be the default values:
-    laptop.fan_rpm = 0; // Autocd
+    // When the driver first loads (At boot), we know these will be the default values:
+    laptop.fan_rpm = 0; // Auto
     laptop.power_mode = 0; // Normal
     laptop.product_id = hdev->product; // Product id
     laptop.usb_dev = usb_dev;
+
     for (i = 0; i < 6; i++) { // Label all the keyboard rows
         laptop.kbd.rows[i].rowid = i;
     }
@@ -275,18 +220,15 @@ static int razer_laptop_probe(struct hid_device *hdev, const struct hid_device_i
 
 // Called on unload
 static void razer_laptop_remove(struct hid_device *hdev) {
-    struct device *dev;
-    struct usb_interface *intf = to_usb_interface(hdev->dev.parent);
-    //dev = hid_get_drvdata(hdev);
+
     device_remove_file(&hdev->dev, &dev_attr_fan_rpm);
     device_remove_file(&hdev->dev, &dev_attr_power_mode);
     device_remove_file(&hdev->dev, &dev_attr_key_colour_map);
     device_remove_file(&hdev->dev, &dev_attr_brightness);
-    if (loaded) {
+    if (loaded) { // Ensure this only happens once!
         led_classdev_unregister(&kbd_backlight);
         loaded = 0;
     }
-    //kfree(dev);
     hid_hw_stop(hdev);
 }
 

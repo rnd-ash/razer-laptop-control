@@ -35,4 +35,6 @@ int creator_mode_allowed(__u32 product_id);
 
 void set_fan_rpm(unsigned long x, struct razer_laptop *laptop);
 
+int set_power_mode(unsigned long x, struct razer_laptop *laptop);
+
 #endif

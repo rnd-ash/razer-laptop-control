@@ -26,7 +26,6 @@ sudo dkms remove razercontrol --all
 **UPDATE: See the rgb_test_service folder for a easier way to use the system**
 
 ### LEGACY WAY VIA SYSFS
-v
 1. CD to the following directory:
 ```
 cd "/sys/module/razercontrol/drivers/hid\:Razer\ System\ control\ driver"
