@@ -48,3 +48,81 @@ int creator_mode_allowed(__u32 product_id)
 		return 0;
 	}
 }
+
+void set_fan_rpm(unsigned long x, struct razer_laptop *laptop) {
+    u8 request_fan_speed;
+    char buffer[90] = {0x00};
+    if (x != 0) {
+        request_fan_speed = clamp_fan_rpm(x, laptop->product_id);
+        laptop->fan_rpm = request_fan_speed * 100;
+        // All packets
+        buffer[0] = 0x00;
+        buffer[1] = 0x1f;
+        buffer[2] = 0x00;
+        buffer[3] = 0x00;
+        buffer[4] = 0x00;
+
+        // Unknown
+        buffer[5] = 0x04;
+        buffer[6] = 0x0d;
+        buffer[7] = 0x82;
+        buffer[8] = 0x00;
+        buffer[9] = 0x01;
+        buffer[10] = 0x00;
+        buffer[11] = 0x00;
+        send_payload(laptop->usb_dev, buffer, 3400, 3800);
+
+        // Unknown
+        buffer[5] = 0x04;
+        buffer[6] = 0x0d;
+        buffer[7] = 0x02;
+        buffer[8] = 0x00;
+        buffer[9] = 0x01;
+        buffer[10] = laptop->power_mode;
+        buffer[11] = laptop->fan_rpm != 0 ? 0x01 : 0x00;
+        send_payload(laptop->usb_dev, buffer, 204000, 205000);
+
+        // Set fan RPM
+        buffer[5] = 0x03;
+        buffer[6] = 0x0d;
+        buffer[7] = 0x01;
+        buffer[8] = 0x00;
+        buffer[9] = 0x01;
+        buffer[10] = request_fan_speed;
+        buffer[11] = 0x00;
+        send_payload(laptop->usb_dev, buffer, 3400, 3800);
+
+        // Unknown
+        buffer[5] = 0x04;
+        buffer[6] = 0x0d;
+        buffer[7] = 0x82;
+        buffer[8] = 0x00;
+        buffer[9] = 0x02;
+        buffer[10] = 0x00;
+        buffer[11] = 0x00;
+        send_payload(laptop->usb_dev, buffer, 3400, 3800);
+    } else {
+        laptop->fan_rpm = 0;
+    }
+    // Fan mode
+    buffer[5] = 0x04;
+    buffer[6] = 0x0d;
+    buffer[7] = 0x02;
+    buffer[8] = 0x00;
+    buffer[9] = 0x02;
+    buffer[10] = laptop->power_mode;
+    buffer[11] = laptop->fan_rpm != 0 ? 0x01 : 0x00;
+    send_payload(laptop->usb_dev, buffer, 204000, 205000);
+
+    if (x != 0) {
+        // Set fan RPM
+        buffer[5] = 0x03;
+        buffer[6] = 0x0d;
+        buffer[7] = 0x01;
+        buffer[8] = 0x00;
+        buffer[9] = 0x02;
+        buffer[10] = request_fan_speed;
+        buffer[11] = 0x00;
+        send_payload(laptop->usb_dev, buffer, 0, 0);
+    }
+}

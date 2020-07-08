@@ -1,38 +1,37 @@
 # Razer laptop control project
 
-*I didn't fancy modifying the openrazer driver, so have something different*
-
-## What is this?
-This is a test driver I wrote in about 20 hours to allow users with Razer laptops to control their fan speed and power mode under Linux (Because using a VM with Synapse is stupid).
+A Kernel driver for Razer laptops with RGB keyboards
 
 ## How to use
-**You Need Linux headers installed first!**
+1. Install your linux headers
 
-**If you have openrazer installed, you MUST unload it first.**
-```
-sudo rmmod razerkbd
-```
+**If you have openrazer installed, you must remove it from your system.**
 
 ### DKMS INSTALL INSTRUCTIONS
 ```
 cd driver
 sudo make driver_dkms
-sudo dkms add -m razercontrol -v 1.0.3
-sudo dkms build -m razercontrol -v 1.0.3
+sudo dkms add -m razercontrol -v 1.1.0
+sudo dkms build -m razercontrol -v 1.1.0
+sudo dkms install -m razercontrol -v 1.1.0
 ```
 After this, you MUST Rebuild your initramfs and reboot. The module will now be persistent
-## OK Driver installed, how do I use this?
 
-**UPDATE. THERE IS NOW A USERSPACE APPLICATION TO DO THIS. SEE THE RGB_TEST_SERVICE FOLDER IN THE REPO**
+### DKMS REMOVE INSTRUCTIONS
+```
+sudo dkms remove razercontrol --all
+```
 
+## Usage
+**UPDATE: See the rgb_test_service folder for a easier way to use the system**
 
 ### LEGACY WAY VIA SYSFS
-
-1. CD to the following directry:
+v
+1. CD to the following directory:
 ```
 cd "/sys/module/razercontrol/drivers/hid\:Razer\ System\ control\ driver"
 ```
-2. From here, ls shows that there are a couple devies to choose from:
+2. From here, ls shows that there are a couple devices to choose from:
 ```
 ls
 0003:1532:0233.0005  0003:1532:0233.0006  0003:1532:0233.0007  bind  module  new_id  uevent  unbind

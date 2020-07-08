@@ -53,6 +53,8 @@ int displayMatrix(struct usb_device *usb);
 
 int sendBrightness(struct usb_device *usb, __u8 brightness);
 
+int getBrightness(struct usb_device *usb);
+
 extern struct row_data matrix[5];
 
 #endif

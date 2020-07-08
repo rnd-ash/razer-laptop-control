@@ -66,3 +66,17 @@ int sendBrightness(struct usb_device *usb, __u8 brightness) {
     #endif
     return send_payload(usb, buffer, 1000, 2000);
 }
+
+int getBrightness(struct usb_device *usb) {
+    char req[90];
+    char resp[90];
+    memset(resp, 0x00, sizeof(resp));
+    memset(req, 0x00, sizeof(req));
+    req[1] = 0x1f;
+    req[5] = 0x02;
+    req[6] = 0x0E;
+    req[7] = 0x84;
+    req[8] = 0x01;
+    recv_payload(usb, req, resp, 800, 1000);
+    return resp[9];
+}

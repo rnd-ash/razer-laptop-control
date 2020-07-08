@@ -10,3 +10,12 @@ This is the driver for the project. Install it to control fan speed, power mode 
 
 ## rgbtestservice
 A test project to control the fan speed, RGB backlight and power target in userspace
+
+# Changelog
+
+## 1.1.0 - 08/07/2020
+* Re-wrote the kernel driver (Made my life easier for the future)
+* Added native ledfs backlight control (You should now be able to control the keyboard backlight via gnome/KDE Desktop)
+
+## 1.0.0
+* Initial release
