@@ -8,38 +8,48 @@
 char *getDeviceDescription(int product_id)
 {
 	switch (product_id) {
-	case BLADE_2016_END:
-		return "Blade 15 late 2016";
-	case BLADE_2018_BASE:
-		return "Blade 15 2018 Base";
-	case BLADE_2018_ADV:
-		return "Blade 15 2018 Advanced";
-	case BLADE_2018_MERC:
-		return "Blade 15 2018 Mercury Edition";
-	case BLADE_2018_PRO_FHD:
-		return "Blade pro 2018 FHD";
-	case BLADE_2019_ADV:
-		return "Blade 15 2019 Advanced";
-	case BLADE_2019_MERC:
-		return "Blade 15 2019 Mercury Edition";
-	case BLADE_2019_STEALTH:
-		return "Blade 2019 Stealth";
-	case BLADE_PRO_2019:
-		return "Blade pro 2019";
-	case BLADE_2016_PRO:
-		return "Blade pro 2016";
-	case BLADE_2017_PRO:
-		return "Blade peo 2017";
-	case BLADE_2017_STEALTH_END:
-		return "Blade Stealth late 2017";
-	case BLADE_2017_STEALTH_MID:
-		return "Blade Stealth mid 2017";
-	case BLADE_2019_STEALTH_GTX:
-		return "Blade Stealth late 2019 (GTX)";
-	case BLADE_2019_BASE:
-		return "Blade 15 2019 Base";
-	case BLADE_QHD:
-		return "Blade QHD";
+	    // 15" laptops
+	    case BLADE_2016_END:
+	        return "Blade 15\" 2016";
+	    case BLADE_2018_ADV:
+	        return "Blade 2018 15\" advanced";
+	    case BLADE_2018_BASE:
+	        return "Blade 2018 15\" base";
+	    case BLADE_2018_MERC:
+	        return "Blade 2018 15\" Mercury edition";
+	    case BLADE_2019_BASE:
+	        return "Blade 2019 15\" base";
+	    case BLADE_2019_ADV:
+            return "Blade 2019 15\" advanced";
+	    case BLADE_2019_MERC:
+	        return "Blade 2019 15\" Mercury edition";
+	    case BLADE_2020_BASE:
+	        return "Blade 2020 15\" base";
+	    case BLADE_2020_ADV:
+	        return "Blade 2020 15\" advanced";
+
+        // Stealth's
+	    case BLADE_2017_STEALTH_MID:
+	        return "Blade 2017 stealth";
+	    case BLADE_2017_STEALTH_END:
+	        return "late Blade 2017 stealth";
+	    case BLADE_2019_STEALTH:
+	        return "Blade 2019 stealth";
+	    case BLADE_2019_STEALTH_GTX:
+	        return "Blade 2019 stealth (With GTX)";
+
+    // Pro laptops laptops
+	    case BLADE_PRO_2019:
+	        return "Blade 2019 pro";
+	    case BLADE_2018_PRO_FHD:
+	        return "Blade 2018 pro FHD";
+	    case BLADE_2017_PRO:
+	        return "Blade 2017 pro";
+	    case BLADE_2016_PRO:
+	        return "Blade 2016 pro";
+    // Other?
+	    case BLADE_QHD:
+	        return "Blade QHD";
 	default:
 		return "UNKNOWN";
 	}
