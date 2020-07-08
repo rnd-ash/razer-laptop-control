@@ -1,9 +1,0 @@
-[Unit]
-Description=razerlaptop-control daemon service.
-
-[Service]
-Type=simple
-ExecStart=/usr/bin/razercontrol-daemon
-
-[Install]
-WantedBy=multi-user.target

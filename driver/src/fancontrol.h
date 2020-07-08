@@ -1,6 +1,11 @@
 /* SPDX-License-Identifier: GPL-2.0 */
+
+#ifndef FAN_H_
+#define FAN_H_
+
 #include <linux/kernel.h>
 #include "defines.h"
+#include "core.h"
 
 // Highest possible fan RPM by default (not laptop specific)
 #define MAX_FAN_RPM_DEFAULT	5000
@@ -28,3 +33,8 @@ u8 clamp_fan_rpm(unsigned int rpm, __u32 product_id);
  */
 int creator_mode_allowed(__u32 product_id);
 
+void set_fan_rpm(unsigned long x, struct razer_laptop *laptop);
+
+int set_power_mode(unsigned long x, struct razer_laptop *laptop);
+
+#endif

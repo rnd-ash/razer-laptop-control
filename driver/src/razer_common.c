@@ -13,7 +13,11 @@
 MODULE_AUTHOR("Ashcon Mohseninia");
 MODULE_DESCRIPTION("Razer system control driver for laptops");
 MODULE_LICENSE("GPL");
-MODULE_VERSION("1.0.4");
+MODULE_VERSION("1.1.0");
+
+static int loaded = 0;
+static razer_laptop laptop = {0x00};
+
 
 /**
  * Function to send RGB data to keyboard to display
@@ -30,27 +34,24 @@ MODULE_VERSION("1.0.4");
  * We expect 360 bytes (4 bytes per key), send in order row 0, key 0 to row 5, key 14.
  */
 static ssize_t key_colour_map_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
-	struct razer_laptop *laptop;
 	int i;
-	laptop = dev_get_drvdata(dev);
 	if (count != 270) {
 		dev_err(dev, "RGB Map expects 270 bytes. Got %ld Bytes", count);
 		return -EINVAL;
 	}
-	mutex_lock(&laptop->lock);
+	mutex_lock(&laptop.lock);
 	for (i = 0; i <= 5; i++) {
 		memcpy(&matrix[i].keys, &buf[i*45], 45);
-		sendRowDataToProfile(laptop->usb_dev, i);
+		sendRowDataToProfile(laptop.usb_dev, i);
 	}
-	displayProfile(laptop->usb_dev, 0);
-	mutex_unlock(&laptop->lock);
+	displayProfile(laptop.usb_dev, 0);
+	mutex_unlock(&laptop.lock);
 	return count;
 }
 
 static ssize_t brightness_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
-	struct razer_laptop *laptop;
+
 	unsigned long brightness;
-	laptop = dev_get_drvdata(dev);
 	if (kstrtol(buf, 10, &brightness)) { // Convert users input to integer
 		#ifdef DEBUG
 		dev_warn(dev, "User entered an invalid input for brightness");
@@ -65,167 +66,53 @@ static ssize_t brightness_store(struct device *dev, struct device_attribute *att
 		return -EINVAL;
 	}
 
-	mutex_lock(&laptop->lock);
-	sendBrightness(laptop->usb_dev, (__u8) brightness);
-	mutex_unlock(&laptop->lock);
+	mutex_lock(&laptop.lock);
+	sendBrightness(laptop.usb_dev, (__u8) brightness);
+	mutex_unlock(&laptop.lock);
 	return count;
 }
 
-static ssize_t brightness_show(struct device *dev, struct device_attribute *attr,
-			    char *buf)
+static ssize_t brightness_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-	int i;
-	struct razer_laptop *laptop;
-	char req[90];
-	char resp[90];
-	laptop = dev_get_drvdata(dev);
-	#ifdef DEBUG
-	dev_warn(dev, "Reading brightness");
-	#endif
-	memset(resp, 0x00, sizeof(resp));
-	memset(req, 0x00, sizeof(req));
-	req[1] = 0x1f;
-	req[5] = 0x02;
-	req[6] = 0x0E;
-	req[7] = 0x84;
-	req[8] = 0x01;
-	recv_payload(laptop->usb_dev, req, resp, 800, 1000);
-
-	for (i = 0; i < 20; i++) {
-		dev_warn(dev, "%02X", resp[i]);
-	}
-
-	return sprintf(buf, "%d\n", (__u8)resp[9]);
+	return sprintf(buf, "%d\n", (__u8)getBrightness(laptop.usb_dev));
 }
 
 /**
  * Called on reading fan_rpm sysfs entry
  */
-static ssize_t fan_rpm_show(struct device *dev, struct device_attribute *attr,
-			    char *buf)
+static ssize_t fan_rpm_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-	struct razer_laptop *laptop = dev_get_drvdata(dev);
 
-	if (laptop->fan_rpm == 0)
-		return sprintf(buf, "%s", "Automatic (0)\n");
+	if (laptop.fan_rpm == 0)
+		return sprintf(buf, "%s", "Auto\n");
 
-	return sprintf(buf, "%d RPM\n", laptop->fan_rpm);
+	return sprintf(buf, "%d RPM\n", laptop.fan_rpm);
 }
 
 /**
  * Called on reading power_mode sysfs entry
  */
-static ssize_t power_mode_show(struct device *dev,
-			       struct device_attribute *attr, char *buf)
+static ssize_t power_mode_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-	struct razer_laptop *laptop = dev_get_drvdata(dev);
 
-	if (laptop->gaming_mode == 0)
+	if (laptop.power_mode == 0)
 		return sprintf(buf, "%s", "Balanced (0)\n");
-	else if (laptop->gaming_mode == 1)
+	else if (laptop.power_mode == 1)
 		return sprintf(buf, "%s", "Gaming (1)\n");
 
 	return sprintf(buf, "%s", "Creator (2)\n");
 }
 
-static ssize_t fan_rpm_store(struct device *dev, struct device_attribute *attr,
-			     const char *buf, size_t count)
+static ssize_t fan_rpm_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
 {
-	struct razer_laptop *laptop = dev_get_drvdata(dev);
 	unsigned long x;
-	u8 request_fan_speed;
-	char buffer[90];
-
-	mutex_lock(&laptop->lock);
-
-	memset(buffer, 0x00, sizeof(buffer));
 	if (kstrtol(buf, 10, &x)) { // Convert users input to integer
-		#ifdef DEBUG
-		dev_warn(dev, "User entered an invalid input for fan rpm. Defaulting to auto");
-		#endif
-		request_fan_speed = 0;
+        #ifdef DEBUG
+		dev_warn(dev, "User entered an invalid input for fan rpm.");
+        #endif
+		return -EINVAL;
 	}
-	if (x != 0) {
-		request_fan_speed = clamp_fan_rpm(x, laptop->product_id);
-		#ifdef DEBUG
-		dev_info(dev, "Requesting MANUAL fan at %d RPM", ((int) request_fan_speed * 100));
-		#endif
-		laptop->fan_rpm = request_fan_speed * 100;
-		// All packets
-		buffer[0] = 0x00;
-		buffer[1] = 0x1f;
-		buffer[2] = 0x00;
-		buffer[3] = 0x00;
-		buffer[4] = 0x00;
-
-		// Unknown
-		buffer[5] = 0x04;
-		buffer[6] = 0x0d;
-		buffer[7] = 0x82;
-		buffer[8] = 0x00;
-		buffer[9] = 0x01;
-		buffer[10] = 0x00;
-		buffer[11] = 0x00;
-		send_payload(laptop->usb_dev, buffer, 3400, 3800);
-
-		// Unknown
-		buffer[5] = 0x04;
-		buffer[6] = 0x0d;
-		buffer[7] = 0x02;
-		buffer[8] = 0x00;
-		buffer[9] = 0x01;
-		buffer[10] = laptop->gaming_mode;
-		buffer[11] = laptop->fan_rpm != 0 ? 0x01 : 0x00;
-		send_payload(laptop->usb_dev, buffer, 204000, 205000);
-
-		// Set fan RPM
-		buffer[5] = 0x03;
-		buffer[6] = 0x0d;
-		buffer[7] = 0x01;
-		buffer[8] = 0x00;
-		buffer[9] = 0x01;
-		buffer[10] = request_fan_speed;
-		buffer[11] = 0x00;
-		send_payload(laptop->usb_dev, buffer, 3400, 3800);
-
-		// Unknown
-		buffer[5] = 0x04;
-		buffer[6] = 0x0d;
-		buffer[7] = 0x82;
-		buffer[8] = 0x00;
-		buffer[9] = 0x02;
-		buffer[10] = 0x00;
-		buffer[11] = 0x00;
-		send_payload(laptop->usb_dev, buffer, 3400, 3800);
-	} else {
-		#ifdef DEBUG
-		dev_info(dev, "Requesting AUTO Fan");
-		#endif
-		laptop->fan_rpm = 0;
-	}
-
-	// Fan mode
-	buffer[5] = 0x04;
-	buffer[6] = 0x0d;
-	buffer[7] = 0x02;
-	buffer[8] = 0x00;
-	buffer[9] = 0x02;
-	buffer[10] = laptop->gaming_mode;
-	buffer[11] = laptop->fan_rpm != 0 ? 0x01 : 0x00;
-	send_payload(laptop->usb_dev, buffer, 204000, 205000);
-
-	if (x != 0) {
-		// Set fan RPM
-		buffer[5] = 0x03;
-		buffer[6] = 0x0d;
-		buffer[7] = 0x01;
-		buffer[8] = 0x00;
-		buffer[9] = 0x02;
-		buffer[10] = request_fan_speed;
-		buffer[11] = 0x00;
-		send_payload(laptop->usb_dev, buffer, 0, 0);
-	}
-	mutex_unlock(&laptop->lock);
+	set_fan_rpm(x, &laptop);
 	return count;
 }
 
@@ -239,68 +126,18 @@ static ssize_t fan_rpm_store(struct device *dev, struct device_attribute *attr,
  * have to send the current fan control state as well within the message
  *
  */
-static ssize_t power_mode_store(struct device *dev,
-				struct device_attribute *attr,
-				const char *buf, size_t count)
+static ssize_t power_mode_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
 {
-	struct razer_laptop *laptop = dev_get_drvdata(dev);
-	ssize_t retval = count;
 	unsigned long x;
-
-	mutex_lock(&laptop->lock);
-
 	if (kstrtol(buf, 10, &x)) {
 		#ifdef DEBUG
 		dev_warn(dev, "User entered an invalid input for power mode. Defaulting to balanced");
 		#endif
 		return -EINVAL;
 	}
-	if (x == 1 || x == 0 || x == 2) {
-		char buffer[90];
+	set_power_mode(x, &laptop);
 
-		#ifdef DEBUG
-		if (x == 0) {
-			dev_info(dev, "%s", "Enabling Balanced power mode");
-		} else if (x == 2 && creator_mode_allowed(laptop->product_id) == 1) {
-			dev_info(dev, "%s", "Enabling Gaming power mode");
-		} else if (x == 1) {
-			dev_info(dev, "%s", "Enabling Gaming power mode");
-		} else {
-			x = 1;
-			#ifdef DEBUG
-			dev_warn(dev, "%s", "Creator mode not allowed, falling back to performance");
-			#endif
-			x = 1;
-		}
-		#else
-		if (x == 2 && creator_mode_allowed(laptop->product_id) == 0) {
-			x = 1;
-		}
-		#endif
-		laptop->gaming_mode = x;
-		memset(buffer, 0x00, sizeof(buffer));
-		// All packets
-		buffer[0] = 0x00;
-		buffer[1] = 0x1f;
-		buffer[2] = 0x00;
-		buffer[3] = 0x00;
-		buffer[4] = 0x00;
-
-		buffer[5] = 0x04;
-		buffer[6] = 0x0d;
-		buffer[7] = 0x02;
-		buffer[8] = 0x00;
-		buffer[9] = 0x01;
-		buffer[10] = laptop->gaming_mode;
-		buffer[11] = laptop->fan_rpm != 0 ? 0x01 : 0x00;
-		send_payload(laptop->usb_dev, buffer, 0, 0);
-	} else {
-		retval = -EINVAL;
-	}
-
-	mutex_unlock(&laptop->lock);
-
-	return retval;
+	return count;
 }
 
 // Set our device attributes in sysfs
@@ -309,68 +146,90 @@ static DEVICE_ATTR_RW(power_mode);
 static DEVICE_ATTR_WO(key_colour_map);
 static DEVICE_ATTR_RW(brightness);
 
-// Called on load module
-static int razer_laptop_probe(struct hid_device *hdev,
-			      const struct hid_device_id *id)
-{
-	struct usb_interface *intf = to_usb_interface(hdev->dev.parent);
-	struct usb_device *usb_dev = interface_to_usbdev(intf);
-	struct razer_laptop *dev;
-	int c;
-	dev = kzalloc(sizeof(struct razer_laptop), GFP_KERNEL);
-	if (!dev)
-		return -ENOMEM;
-
-	mutex_init(&dev->lock);
-	dev->usb_dev = usb_dev;
-	dev->fan_rpm = 0;
-	dev->gaming_mode = 0;
-	dev->product_id = hdev->product;
-	// Internal laptop touchpad found (over USB Bus).
-	// Don't bind to it so unload.
-	// Only the Keyboard can control the fan speed
-	if (intf->cur_altsetting->desc.bInterfaceProtocol != USB_INTERFACE_PROTOCOL_KEYBOARD) {
-		kfree(dev);
-		return -ENODEV;
-	}
-	dev_info(&intf->dev, "Found supported device: %s\n", getDeviceDescription(dev->product_id));
-	device_create_file(&hdev->dev, &dev_attr_fan_rpm);
-	device_create_file(&hdev->dev, &dev_attr_power_mode);
-	device_create_file(&hdev->dev, &dev_attr_key_colour_map);
-	device_create_file(&hdev->dev, &dev_attr_brightness);
-	hid_set_drvdata(hdev, dev);
-	if (hid_parse(hdev)) {
-		hid_err(hdev, "Failed to parse device!\n");
-		kfree(dev);
-		return -ENODEV;
-	}
-	if (hid_hw_start(hdev, HID_CONNECT_DEFAULT)) {
-		hid_err(hdev, "Failed to start device!\n");
-		kfree(dev);
-		return -ENODEV;
-	}
-	dev_info(&intf->dev, "Found supported device: %s\n", getDeviceDescription(dev->product_id));
-	for (c=0; c <=5; c++) {
-		memset(matrix[c].keys, 0xFF, sizeof(matrix[c].keys));	
-	}
-	displayMatrix(usb_dev);
-	return 0;
+static int backlight_sysfs_set(struct led_classdev *led_cdev, enum led_brightness brightness) {
+    return sendBrightness(laptop.usb_dev, (__u8) brightness);
 }
 
-// Called on unload module
-static void razer_laptop_remove(struct hid_device *hdev)
-{
-	struct device *dev;
-	struct usb_interface *intf = to_usb_interface(hdev->dev.parent);
+static enum led_brightness backlight_sysfs_get(struct led_classdev *ledclass) {
+    return getBrightness(laptop.usb_dev);
+}
 
-	dev = hid_get_drvdata(hdev);
-	device_remove_file(&hdev->dev, &dev_attr_fan_rpm);
-	device_remove_file(&hdev->dev, &dev_attr_power_mode);
-	device_remove_file(&hdev->dev, &dev_attr_key_colour_map);
-	device_remove_file(&hdev->dev, &dev_attr_brightness);
-	hid_hw_stop(hdev);
-	kfree(dev);
-	dev_info(&intf->dev, "Razer_laptop_control: Unloaded\n");
+static struct led_classdev kbd_backlight = {
+        .name = "razerlaptop::kbd_backlight",
+        .max_brightness = 255,
+        .flags = LED_BRIGHT_HW_CHANGED,
+        .brightness_set_blocking = &backlight_sysfs_set,
+        .brightness_get	= &backlight_sysfs_get,
+};
+
+// Called on module load
+static int razer_laptop_probe(struct hid_device *hdev, const struct hid_device_id *id) {
+    int i;
+    int rc;
+    struct usb_interface *intf;
+    struct usb_device *usb_dev;
+    intf = to_usb_interface(hdev->dev.parent);
+    usb_dev = interface_to_usbdev(intf);
+
+    dev_info(&intf->dev, "Loading module\n");
+    if (intf->cur_altsetting->desc.bInterfaceProtocol != USB_INTERFACE_PROTOCOL_KEYBOARD) {
+        // Found the mouse - unload!
+        return -ENODEV;
+    }
+    dev_info(&intf->dev, "Found supported laptop: %s\n", getDeviceDescription(hdev->product));
+
+    mutex_init(&laptop.lock);
+    // When the driver first loads (At boot), we know these will be the default values:
+    laptop.fan_rpm = 0; // Auto
+    laptop.power_mode = 0; // Normal
+    laptop.product_id = hdev->product; // Product id
+    laptop.usb_dev = usb_dev;
+
+    for (i = 0; i < 6; i++) { // Label all the keyboard rows
+        laptop.kbd.rows[i].rowid = i;
+    }
+
+    // Create SYSFS entries
+    device_create_file(&hdev->dev, &dev_attr_fan_rpm);
+    device_create_file(&hdev->dev, &dev_attr_power_mode);
+    device_create_file(&hdev->dev, &dev_attr_key_colour_map);
+    device_create_file(&hdev->dev, &dev_attr_brightness);
+
+    // Now init the backlight stuff - Only do it once!
+    if (!loaded) {
+        rc = led_classdev_register(&intf->dev, &kbd_backlight);
+        if (rc < 0) {
+            hid_err(hdev, "Failed to setup backlight!\n");
+            return rc;
+        }
+    }
+    loaded = 1;
+
+    // Now set driver data
+    hid_set_drvdata(hdev, &laptop);
+    if (hid_parse(hdev)) {
+        hid_err(hdev, "Failed to parse device!\n");
+        return -ENODEV;
+    }
+    if (hid_hw_start(hdev, HID_CONNECT_DEFAULT)) {
+        hid_err(hdev, "Failed to start device!\n");
+        return -ENODEV;
+    }
+    return 0;
+}
+
+// Called on unload
+static void razer_laptop_remove(struct hid_device *hdev) {
+
+    device_remove_file(&hdev->dev, &dev_attr_fan_rpm);
+    device_remove_file(&hdev->dev, &dev_attr_power_mode);
+    device_remove_file(&hdev->dev, &dev_attr_key_colour_map);
+    device_remove_file(&hdev->dev, &dev_attr_brightness);
+    if (loaded) { // Ensure this only happens once!
+        led_classdev_unregister(&kbd_backlight);
+        loaded = 0;
+    }
+    hid_hw_stop(hdev);
 }
 
 // Support list for module
