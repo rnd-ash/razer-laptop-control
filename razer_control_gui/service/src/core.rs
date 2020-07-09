@@ -118,7 +118,7 @@ impl DriverHandler {
 
     // RGB Map is write only
     pub fn write_rgb_map(&mut self, map: Vec<u8>) -> bool {
-        return self.write_to_sysfs_raw(drv_fs_names::BRIGHTNESS, map);
+        return self.write_to_sysfs_raw(drv_fs_names::RGB_MAP, map);
     }
 
 

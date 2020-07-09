@@ -3,9 +3,10 @@ extern crate tiny_nix_ipc;
 
 mod rgb;
 mod core;
-use std::process;
+mod effects;
+use rand::Rng;
 use std::os::unix::net::{UnixStream, UnixListener};
-use std::{error::Error, thread};
+use std::{error::Error, thread, time, process};
 use signal_hook::{iterator::Signals, SIGTERM, SIGINT};
 
 
@@ -27,6 +28,16 @@ fn main() {
     let mut core = core::DriverHandler::new().expect("Error. Is kernel module loaded?");
     
     let mut c = core::configuration::new();
+
+    let mut kbd = rgb::KeyboardData::new();
+
+    let mut rng = rand::thread_rng();
+
+    for _ in 0..1000 {
+        kbd.set_kbd_colour(rng.gen(), rng.gen(), rng.gen());
+        kbd.update_kbd(&mut core);
+        std::thread::sleep(time::Duration::from_millis(10));
+    }
     
     if let Ok(_) = std::fs::metadata(core::SOCKET_PATH) {
         eprintln!("UNIX Socket already exists at {}. Is another daemon running?", core::SOCKET_PATH);
