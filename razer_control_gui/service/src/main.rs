@@ -1,38 +1,60 @@
-use std::path::Path;
+extern crate tiny_nix_ipc;
+
+
+mod rgb;
+mod core;
 use std::process;
-use std::fs;
-use std::io::{Error, ErrorKind};
-use std::io;
-use std::option;
-
-const DRIVER_DIR: &str = "/sys/module/razercontrol/drivers/hid:Razer laptop System control driver";
-
-fn assert_driver_loaded() -> bool {
-    return Path::new(DRIVER_DIR).exists();
-}
+use std::os::unix::net::{UnixStream, UnixListener};
+use std::{error::Error, thread};
+use signal_hook::{iterator::Signals, SIGTERM, SIGINT};
 
 
-fn get_device_dir() -> Option<String> {
-    return match fs::read_dir(DRIVER_DIR).unwrap()
-    .find(|x| x.as_ref().unwrap().file_name().to_str().unwrap().starts_with("000"))
-    .unwrap() {
-        Ok(p) => Some(String::from(p.path().to_str().unwrap())),
-        Err(_) => None
-    }
-}
-
-
+// Main function for daemon
 fn main() {
-    if !assert_driver_loaded() {
-        println!("Error. Driver is not loaded!");
-        process::exit(1);
+
+    // Signal handler - cleanup if we are told to exit
+    let signals = Signals::new(&[SIGINT, SIGINT]).unwrap();
+    thread::spawn(move || {
+        for _ in signals.forever() {
+            println!("Received signal, cleaning up");
+            std::fs::remove_file(core::SOCKET_PATH).unwrap();
+            std::process::exit(0);
+        }
+    });
+
+
+    // Setup driver core framework
+    let mut core = core::DriverHandler::new().expect("Error. Is kernel module loaded?");
+    
+    let mut c = core::configuration::new();
+    
+    if let Ok(_) = std::fs::metadata(core::SOCKET_PATH) {
+        eprintln!("UNIX Socket already exists at {}. Is another daemon running?", core::SOCKET_PATH);
+        std::process::exit(1);
     }
-    let res = get_device_dir();
-    if res.is_none() {
-        println!("Error. Cannot find device path!");
-        process::exit(1);
+    if let Ok(listener) = UnixListener::bind(core::SOCKET_PATH) {
+        let mut perms = std::fs::metadata(core::SOCKET_PATH).unwrap().permissions();
+        perms.set_readonly(false);
+        std::fs::set_permissions(core::SOCKET_PATH, perms);
+        println!("Listening to events!");
+        for stream in listener.incoming() {
+            match stream {
+                Ok(stream) => {
+                    thread::spawn(|| handle_data(stream));
+                }
+                Err(err) => {
+                    eprintln!("WARN: Broken stream, ignored");
+                    break;
+                }
+            }
+        }
+    } else {
+        eprintln!("Could not create Unix socket!");
+        std::process::exit(1);
     }
-    let drv_dir = res.unwrap();
-    println!("Directory: {}", drv_dir);
-    process::exit(0);
+
+}
+
+fn handle_data(stream: UnixStream) {
+    println!("Data!");
 }
