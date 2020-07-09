@@ -8,13 +8,12 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  working-directory: ./razer_control_gui/service  
 
 jobs:
   build:
 
     runs-on: ubuntu-latest
-
+    working-directory: ./razer_control_gui/service  
     steps:
     - uses: actions/checkout@v2
     - name: Build
