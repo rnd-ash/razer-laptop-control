@@ -156,14 +156,11 @@ impl Effect for BlendEffect {
 pub struct BreathEffect {
     pub kbd: rgb::KeyboardData,
     step_duration_ms: u128,
-    step_start_ms: u128,
+    static_start_ms: u128,
     curr_step: u8, // Step 0 = Off, 1 = increasing, 2 = On, 3 = decreasing
-    targ_red: f32,
-    targ_green: f32,
-    targ_blue: f32,
-    curr_red: f32,
-    curr_green: f32,
-    curr_blue: f32
+    target_colour: rgb::AnimatorKeyColour,
+    current_colour: rgb::AnimatorKeyColour,
+    animator_step_colour: rgb::AnimatorKeyColour
 }
 
 impl BreathEffect {
@@ -173,44 +170,53 @@ impl BreathEffect {
         return BreathEffect {
             kbd: k,
             step_duration_ms: cycle_duration_ms as u128,
-            step_start_ms : EffectManager::get_millis(),
+            static_start_ms: EffectManager::get_millis(),
             curr_step: 0,
-            targ_red: red as f32,
-            targ_green: green as f32,
-            targ_blue: blue as f32,
-            curr_red : 0.0,
-            curr_green: 0.0,
-            curr_blue: 0.0
+            target_colour : rgb::AnimatorKeyColour { red: red as f32, green: green as f32, blue: blue as f32 },
+            current_colour : rgb::AnimatorKeyColour { red: 0.0, green: 0.0, blue: 0.0 },
+            animator_step_colour : rgb::AnimatorKeyColour {
+                red: red as f32 / (cycle_duration_ms as f32 / ANIMATIONS_DELAY_MS as f32) as f32,
+                green: green as f32 / (cycle_duration_ms as f32 / ANIMATIONS_DELAY_MS as f32) as f32,
+                blue: blue as f32 / (cycle_duration_ms as f32 / ANIMATIONS_DELAY_MS as f32) as f32
+            }
         }
     }
 }
 
 impl Effect for BreathEffect {
     fn update(&mut self) -> rgb::KeyboardData {
-        if EffectManager::get_millis() - self.step_duration_ms >= self.step_duration_ms { // Time to change keyboard's phase
-            self.curr_step += 1;
-            if self.curr_step == 4 {
-                self.curr_step = 0 // Reset step
-            }
-        }
-        let step_red = self.targ_red / (self.step_duration_ms as f32 / ANIMATIONS_DELAY_MS as f32);
-        let step_green = self.targ_green / (self.step_duration_ms as f32 / ANIMATIONS_DELAY_MS as f32);
-        let step_blue = self.targ_blue / (self.step_duration_ms as f32 / ANIMATIONS_DELAY_MS as f32);
         match self.curr_step {
+            0 => {
+                self.current_colour = rgb::AnimatorKeyColour { red: 0.0, green: 0.0, blue: 0.0 };
+                if EffectManager::get_millis() - self.static_start_ms >= self.step_duration_ms {
+                    self.curr_step += 1;
+                }
+            }
             1 => { // Increasing
-                self.curr_red += step_red;
-                self.curr_green += step_green;
-                self.curr_blue += step_blue;
+                self.current_colour += self.animator_step_colour;
+                if self.current_colour >= self.target_colour {
+                    self.curr_step += 1;
+                    self.static_start_ms = EffectManager::get_millis();
+                }
+            },
+            2 => {
+                self.current_colour = self.target_colour;
+                if EffectManager::get_millis() - self.static_start_ms >= self.step_duration_ms {
+                    self.curr_step += 1;
+                }
             },
             3 => { // Decreasing
-                self.curr_red -= step_red;
-                self.curr_green -= step_green;
-                self.curr_blue -= step_blue;
+                self.current_colour -= self.animator_step_colour;
+                let target = rgb::AnimatorKeyColour { red: 0.0, green: 0.0, blue: 0.0 };
+                if self.current_colour <= target {
+                    self.curr_step = 0;
+                    self.static_start_ms = EffectManager::get_millis();
+                }
             }
-            _ => {} // Other state which is static
+            _ => {} // Unknown state? Ignore
         }
-        self.kbd.set_kbd_colour(self.curr_red as u8, self.curr_green as u8, self.curr_blue as u8); // Cast back to u8
+        let col = self.current_colour.get_clamped_colour();
+        self.kbd.set_kbd_colour(col.red, col.green, col.blue); // Cast back to u8
         return self.kbd;
     }
 }
-

@@ -29,14 +29,34 @@ fn main() {
     // Setup driver core frameworks
     let mut drv_core = core::DriverHandler::new().expect("Error. Is kernel module loaded?");
     
-    let e1 = effects::BreathEffect::new(255, 255, 255, 1000); // New breathing layer
+    let e1 = effects::BreathEffect::new(255, 255, 0, 1000); // New breathing layer
+    let e1_layer : [bool; 90] = [true; 90]; // Layer 0's keys are all enabled
+
+    let e2 = effects::BreathEffect::new(0, 255, 255, 100); // New breathing layer
+    let e2_layer: [bool; 90] = [
+        true, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+        true, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+        true, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+        true, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+        true, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+        true, false, false, false, false, false, false, false, false, false, false, false, false, false, false
+    ];
+    let e3 = effects::BreathEffect::new(255, 0, 255, 500); // New breathing layer
+    let e3_layer: [bool; 90] = [
+        false, false, false, false, false, false, false, false, false, false, false, false, false, false, true,
+        false, false, false, false, false, false, false, false, false, false, false, false, false, false, true,
+        false, false, false, false, true, false, false, false, false, false, false, false, false, false, true,
+        false, false, false, false, false, false, false, false, false, false, false, false, false, false, true,
+        false, false, false, false, false, false, false, false, false, false, false, false, false, false, true,
+        false, false, false, false, false, false, false, false, false, false, false, false, false, false, true
+    ];
 
 
     let mut eManager = effects::EffectManager::new(); // New effect manager
-    let mut matrix : [bool; 90] = [true; 90]; // Layer 0 creation - All keys should use the effect
-    eManager.push_effect(Box::new(e1), &matrix); // Push effect 0 to manager
-
-    while(true) {
+    eManager.push_effect(Box::new(e1), &e1_layer);
+    eManager.push_effect(Box::new(e2), &e2_layer);
+    eManager.push_effect(Box::new(e3), &e3_layer);
+    loop {
         eManager.update(&mut drv_core); // Update the effects and render!
         std::thread::sleep(std::time::Duration::from_millis(10));
     }

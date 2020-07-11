@@ -1,4 +1,6 @@
 use crate::core;
+use std::ops;
+use std::cmp::Ordering;
 
 // -- RGB Key channel -- 
 
@@ -17,6 +19,100 @@ pub struct KeyColour {
     /// Blue channel
     pub blue: u8
 }
+
+#[derive(Copy, Clone, Debug)]
+pub struct AnimatorKeyColour {
+    pub red: f32,
+    pub green: f32,
+    pub blue: f32
+}
+
+impl AnimatorKeyColour {
+    fn new(red: f32, green: f32, blue: f32) -> AnimatorKeyColour {
+        AnimatorKeyColour {
+            red,
+            green,
+            blue
+        }
+    }
+
+    fn clamp_colour(inp: f32) -> u8 {
+        let mut input = inp;
+        if input > 255.0 { input = 255.0 };
+        if input < 0.0 { input = 0.0 };
+        return input as u8;
+    }
+
+    pub fn get_clamped_colour(&mut self) -> KeyColour {
+        KeyColour {
+            red: AnimatorKeyColour::clamp_colour(self.red),
+            green: AnimatorKeyColour::clamp_colour(self.green),
+            blue: AnimatorKeyColour::clamp_colour(self.blue)
+        }
+    }
+}
+
+impl ops::Add for AnimatorKeyColour {
+    type Output = Self;
+    fn add(self, rhs: Self) -> Self {
+        Self {
+            red: self.red + rhs.red,
+            green: self.green + rhs.green,
+            blue: self.blue + rhs.blue
+        }
+    }
+}
+
+impl ops::Sub for AnimatorKeyColour {
+    type Output = Self;
+    fn sub(self, rhs: Self) -> Self {
+        Self {
+            red: self.red - rhs.red,
+            green: self.green - rhs.green,
+            blue: self.blue - rhs.blue
+        }
+    }
+}
+
+impl ops::AddAssign for AnimatorKeyColour {
+    fn add_assign(&mut self, rhs: AnimatorKeyColour) {
+        self.red += rhs.red;
+        self.green += rhs.green;
+        self.blue += rhs.blue;
+    }
+}
+
+impl ops::SubAssign for AnimatorKeyColour {
+    fn sub_assign(&mut self, rhs: AnimatorKeyColour) {
+        self.red -= rhs.red;
+        self.green -= rhs.green;
+        self.blue -= rhs.blue;
+    }
+}
+
+impl PartialEq for AnimatorKeyColour {
+    fn eq(&self, other: &AnimatorKeyColour) -> bool {
+        self.red == other.red && self.blue == other.blue && self.green == other.green
+    }
+}
+
+impl PartialOrd for AnimatorKeyColour {
+    fn partial_cmp(&self, other: &AnimatorKeyColour) -> Option<Ordering> {
+        if self.red == other.red && self.blue == other.blue && self.green == other.green {
+            return Some(Ordering::Equal);
+        } else if self.red >= other.red && self.blue >= other.blue && self.green >= other.green {
+            return Some(Ordering::Greater);
+        } else if self.red <= other.red && self.blue <= other.blue && self.green <= other.green {
+            return Some(Ordering::Less);
+        }
+        return None;
+    }
+}
+
+
+
+
+
 
 #[derive(Copy, Clone, Debug)]
 /// Represents a horizontal row of 15 keys on the keyboard
