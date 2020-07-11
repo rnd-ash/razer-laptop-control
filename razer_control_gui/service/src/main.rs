@@ -29,27 +29,17 @@ fn main() {
     // Setup driver core frameworks
     let mut drv_core = core::DriverHandler::new().expect("Error. Is kernel module loaded?");
     
-    let e1 = effects::BlendEffect::new(255, 255, 255, 0, 0, 0, effects::EffectDir::Diagonal); // New static layer (Red)
-    let e2 = effects::StaticEffect::new(0, 0, 255); // New static layer ( Blue)
+    let e1 = effects::BreathEffect::new(255, 255, 255, 1000); // New breathing layer
 
 
     let mut eManager = effects::EffectManager::new(); // New effect manager
     let mut matrix : [bool; 90] = [true; 90]; // Layer 0 creation - All keys should use the effect
     eManager.push_effect(Box::new(e1), &matrix); // Push effect 0 to manager
 
-    /*
-    matrix = [false; 90]; // Set all keys to disabled for layer 1...
-    
-    for x in 0..90 { // Enable every other key to use effect 1
-        if x % 2 == 0 {
-            matrix[x] = true;
-        }
+    while(true) {
+        eManager.update(&mut drv_core); // Update the effects and render!
+        std::thread::sleep(std::time::Duration::from_millis(10));
     }
-
-    eManager.push_effect(Box::new(e2), &matrix); // Push the new effect
-    */
-    eManager.update(&mut drv_core); // Update the effects and render!
-
     
     if let Ok(_) = std::fs::metadata(core::SOCKET_PATH) {
         eprintln!("UNIX Socket already exists at {}. Is another daemon running?", core::SOCKET_PATH);
