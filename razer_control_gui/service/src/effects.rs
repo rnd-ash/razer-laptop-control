@@ -68,10 +68,18 @@ impl EffectManager {
     }
 }
 
+pub enum EffectDir {
+    Vertical,
+    Horizontal,
+    Diagonal,
+    Circular
+}
 
 pub trait Effect {
     fn update(&mut self) -> rgb::KeyboardData;
 }
+
+// -- Static effect code --
 
 pub struct StaticEffect {
     pub kbd: rgb::KeyboardData
@@ -93,3 +101,55 @@ impl Effect for StaticEffect {
         return self.kbd;
     }
 }
+
+// -- 'Blend' effect code --
+pub struct BlendEffect {
+    pub kbd: rgb::KeyboardData
+}
+
+impl BlendEffect {
+    pub fn new(r1: u8, g1: u8, b1: u8, r2: u8, g2: u8, b2: u8, dir: EffectDir) -> BlendEffect {
+        let mut k = rgb::KeyboardData::new();
+        let dr : f32 = r2 as f32 - r1 as f32; // Delta red
+        let dg : f32 = g2 as f32 - g1 as f32; // Delta green
+        let db : f32 = b2 as f32 - b1 as f32; // Delta blue
+        match dir {
+            EffectDir::Vertical => {
+                for x in 0..6 {
+                    let col_blend_ratio = (x+1) as f32 / 6.0;
+                    k.set_row_colour(x, 
+                        (r1 as f32 + (dr * col_blend_ratio)) as u8,
+                        (g1 as f32 + (dg * col_blend_ratio)) as u8,
+                        (b1 as f32 + (db * col_blend_ratio)) as u8);
+    
+                }
+            },
+            EffectDir::Horizontal => {
+                for x in 0..15 {
+                    let col_blend_ratio = (x+1) as f32 / 15.0;
+                    k.set_col_colour(x, 
+                        (r1 as f32 + (dr * col_blend_ratio)) as u8,
+                        (g1 as f32 + (dg * col_blend_ratio)) as u8,
+                        (b1 as f32 + (db * col_blend_ratio)) as u8);
+    
+                }
+            },
+            _ => { 
+                // Unsupported direction, default to vertical
+                eprintln!("BlendMode Diagonal unsupported, using vertical");
+                return BlendEffect::new(r1, g1, b1, r2, g2, b2, EffectDir::Vertical) 
+            }
+        }
+        BlendEffect {
+            kbd : k
+        }
+    }
+}
+
+impl Effect for BlendEffect {
+    fn update(&mut self) -> rgb::KeyboardData {
+        // Does nothing on static effect
+        return self.kbd;
+    }
+}
+

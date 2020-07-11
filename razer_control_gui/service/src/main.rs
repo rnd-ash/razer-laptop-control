@@ -26,10 +26,10 @@ fn main() {
     });
 
 
-    // Setup driver core framework
+    // Setup driver core frameworks
     let mut drv_core = core::DriverHandler::new().expect("Error. Is kernel module loaded?");
     
-    let e1 = effects::StaticEffect::new(255, 0, 0); // New static layer (Red)
+    let e1 = effects::BlendEffect::new(255, 255, 255, 0, 0, 0, effects::EffectDir::Diagonal); // New static layer (Red)
     let e2 = effects::StaticEffect::new(0, 0, 255); // New static layer ( Blue)
 
 
@@ -37,6 +37,7 @@ fn main() {
     let mut matrix : [bool; 90] = [true; 90]; // Layer 0 creation - All keys should use the effect
     eManager.push_effect(Box::new(e1), &matrix); // Push effect 0 to manager
 
+    /*
     matrix = [false; 90]; // Set all keys to disabled for layer 1...
     
     for x in 0..90 { // Enable every other key to use effect 1
@@ -46,6 +47,7 @@ fn main() {
     }
 
     eManager.push_effect(Box::new(e2), &matrix); // Push the new effect
+    */
     eManager.update(&mut drv_core); // Update the effects and render!
 
     

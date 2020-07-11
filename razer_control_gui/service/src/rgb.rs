@@ -98,16 +98,20 @@ impl KeyboardData {
 
     /// Sets a specific key in the keyboard matrix to a colour
     pub fn set_key_colour(&mut self, row: usize, col: usize, r: u8, g: u8, b: u8) {
+        if row >= ROWS { return }
+        if col >= KEYS_PER_ROW { return }
         self.rows[row].set_key_color(col, r, g, b)
     }
 
     /// Sets a horizontal row on the keyboard to a colour
     pub fn set_row_colour(&mut self, row: usize, r: u8, g: u8, b: u8) {
+        if row >= ROWS { return }
         self.rows[row].set_row_color(r, g, b)
     }
 
     /// Sets a vertical column on the keyboard to a colour
     pub fn set_col_colour(&mut self, col: usize, r: u8, g: u8, b: u8) {
+        if col >= KEYS_PER_ROW { return }
         for row_id in 0..ROWS {
             self.rows[row_id].set_key_color(col, r, g, b)
         }
