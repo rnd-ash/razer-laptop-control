@@ -72,7 +72,6 @@ pub struct KeyboardData {
 }
 
 impl KeyboardData {
-
     pub fn new() -> KeyboardData {
         return KeyboardData {
             rows : [RowData::new(); ROWS],
@@ -121,5 +120,14 @@ impl KeyboardData {
         }
     }
 
+    /// Returns a specific key
+    pub fn get_key_at(&mut self, index: usize) -> KeyColour {
+        self.rows[index / KEYS_PER_ROW].keys[index % KEYS_PER_ROW]
+    }
+
+    /// Internal function used only for the combining of effect layers
+    pub fn set_key_at(&mut self, index: usize, col: KeyColour) {
+        self.rows[index / KEYS_PER_ROW].keys[index % KEYS_PER_ROW] = col
+    }
 }
 

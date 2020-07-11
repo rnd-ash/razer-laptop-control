@@ -18,26 +18,36 @@ fn main() {
     thread::spawn(move || {
         for _ in signals.forever() {
             println!("Received signal, cleaning up");
-            std::fs::remove_file(core::SOCKET_PATH).unwrap();
+            if std::fs::metadata(core::SOCKET_PATH).is_ok() {
+                std::fs::remove_file(core::SOCKET_PATH).unwrap();
+            }
             std::process::exit(0);
         }
     });
 
 
     // Setup driver core framework
-    let mut core = core::DriverHandler::new().expect("Error. Is kernel module loaded?");
+    let mut drv_core = core::DriverHandler::new().expect("Error. Is kernel module loaded?");
     
-    let mut c = core::configuration::new();
+    let e1 = effects::StaticEffect::new(255, 0, 0); // New static layer (Red)
+    let e2 = effects::StaticEffect::new(0, 0, 255); // New static layer ( Blue)
 
-    let mut kbd = rgb::KeyboardData::new();
 
-    let mut rng = rand::thread_rng();
+    let mut eManager = effects::EffectManager::new(); // New effect manager
+    let mut matrix : [bool; 90] = [true; 90]; // Layer 0 creation - All keys should use the effect
+    eManager.push_effect(Box::new(e1), &matrix); // Push effect 0 to manager
 
-    for _ in 0..1000 {
-        kbd.set_kbd_colour(rng.gen(), rng.gen(), rng.gen());
-        kbd.update_kbd(&mut core);
-        std::thread::sleep(time::Duration::from_millis(10));
+    matrix = [false; 90]; // Set all keys to disabled for layer 1...
+    
+    for x in 0..90 { // Enable every other key to use effect 1
+        if x % 2 == 0 {
+            matrix[x] = true;
+        }
     }
+
+    eManager.push_effect(Box::new(e2), &matrix); // Push the new effect
+    eManager.update(&mut drv_core); // Update the effects and render!
+
     
     if let Ok(_) = std::fs::metadata(core::SOCKET_PATH) {
         eprintln!("UNIX Socket already exists at {}. Is another daemon running?", core::SOCKET_PATH);
