@@ -1,13 +1,11 @@
-use crate::core;
-use std::ops;
+use crate::daemon_core;
 use std::cmp::Ordering;
+use std::ops;
 
-// -- RGB Key channel -- 
+// -- RGB Key channel --
 
 const KEYS_PER_ROW: usize = 15;
 const ROWS: usize = 6;
-
-
 
 #[derive(Copy, Clone, Debug)]
 /// Represents the colour channels for a key
@@ -17,37 +15,41 @@ pub struct KeyColour {
     /// Green channel
     pub green: u8,
     /// Blue channel
-    pub blue: u8
+    pub blue: u8,
 }
 
+/// Same as `KeyColour`, but uses f32 values, for more accurate frame by frame
+/// colour blending in animations
 #[derive(Copy, Clone, Debug)]
 pub struct AnimatorKeyColour {
     pub red: f32,
     pub green: f32,
-    pub blue: f32
+    pub blue: f32,
 }
 
 impl AnimatorKeyColour {
     fn new(red: f32, green: f32, blue: f32) -> AnimatorKeyColour {
-        AnimatorKeyColour {
-            red,
-            green,
-            blue
-        }
+        AnimatorKeyColour { red, green, blue }
     }
 
+    /// Clamps a f32 between 0 and 255, returns a `u8`
     fn clamp_colour(inp: f32) -> u8 {
         let mut input = inp;
-        if input > 255.0 { input = 255.0 };
-        if input < 0.0 { input = 0.0 };
+        if input > 255.0 {
+            input = 255.0
+        };
+        if input < 0.0 {
+            input = 0.0
+        };
         return input as u8;
     }
 
-    pub fn get_clamped_colour(&mut self) -> KeyColour {
+    
+    pub fn get_clamped_colour(&self) -> KeyColour {
         KeyColour {
             red: AnimatorKeyColour::clamp_colour(self.red),
             green: AnimatorKeyColour::clamp_colour(self.green),
-            blue: AnimatorKeyColour::clamp_colour(self.blue)
+            blue: AnimatorKeyColour::clamp_colour(self.blue),
         }
     }
 }
@@ -58,7 +60,7 @@ impl ops::Add for AnimatorKeyColour {
         Self {
             red: self.red + rhs.red,
             green: self.green + rhs.green,
-            blue: self.blue + rhs.blue
+            blue: self.blue + rhs.blue,
         }
     }
 }
@@ -69,7 +71,7 @@ impl ops::Sub for AnimatorKeyColour {
         Self {
             red: self.red - rhs.red,
             green: self.green - rhs.green,
-            blue: self.blue - rhs.blue
+            blue: self.blue - rhs.blue,
         }
     }
 }
@@ -109,23 +111,22 @@ impl PartialOrd for AnimatorKeyColour {
     }
 }
 
-
-
-
-
-
 #[derive(Copy, Clone, Debug)]
 /// Represents a horizontal row of 15 keys on the keyboard
 pub struct RowData {
-    keys: [KeyColour; KEYS_PER_ROW]
+    keys: [KeyColour; KEYS_PER_ROW],
 }
 
 impl RowData {
     /// Generates an empty keyboard row, with each key being white (FF,FF,FF)
     pub fn new() -> RowData {
         return RowData {
-            keys: [KeyColour{ red: 255, green: 255, blue: 255 }; KEYS_PER_ROW]
-        }
+            keys: [KeyColour {
+                red: 255,
+                green: 255,
+                blue: 255,
+            }; KEYS_PER_ROW],
+        };
     }
 
     /// Sets key colour within the row
@@ -136,7 +137,11 @@ impl RowData {
     /// * g - Green channel value
     /// * b - Blue channel value
     pub fn set_key_color(&mut self, pos: usize, r: u8, g: u8, b: u8) {
-        self.keys[pos] = KeyColour { red: r, green: g, blue: b }
+        self.keys[pos] = KeyColour {
+            red: r,
+            green: g,
+            blue: b,
+        }
     }
 
     /// Sets the entire key row to a colour
@@ -149,7 +154,8 @@ impl RowData {
         (0..KEYS_PER_ROW).for_each(|x| self.set_key_color(x, r, g, b)) // Sets the entire row
     }
 
-    pub fn get_row_data(&mut self) -> Vec<u8> { // *3 as itll be the RGB values
+    pub fn get_row_data(&mut self) -> Vec<u8> {
+        // *3 as itll be the RGB values
         let mut v = Vec::<u8>::with_capacity(3 * KEYS_PER_ROW);
         self.keys.iter().for_each(|k| {
             v.push(k.red);
@@ -160,31 +166,30 @@ impl RowData {
     }
 }
 
-
 #[derive(Copy, Clone, Debug)]
 pub struct KeyboardData {
     rows: [RowData; ROWS],
-    brightness: u8
+    brightness: u8,
 }
 
 impl KeyboardData {
     pub fn new() -> KeyboardData {
         return KeyboardData {
-            rows : [RowData::new(); ROWS],
-            brightness: 0
-        }
+            rows: [RowData::new(); ROWS],
+            brightness: 0,
+        };
     }
 
-    pub fn set_brightness(&mut self, val: u8, handler: &mut core::DriverHandler) -> bool {
+    pub fn set_brightness(&mut self, val: u8, handler: &mut daemon_core::DriverHandler) -> bool {
         handler.write_brightness(val)
     }
 
-    pub fn get_brightness(&mut self, handler: &mut core::DriverHandler) -> u8 {
+    pub fn get_brightness(&mut self, handler: &mut daemon_core::DriverHandler) -> u8 {
         self.brightness = handler.read_brightness();
         self.brightness
     }
 
-    pub fn update_kbd(&mut self, handler: &mut core::DriverHandler) -> bool {
+    pub fn update_kbd(&mut self, handler: &mut daemon_core::DriverHandler) -> bool {
         let mut all_vals = Vec::<u8>::with_capacity(3 * KEYS_PER_ROW * ROWS);
         for row in self.rows.iter_mut() {
             all_vals.extend(&row.get_row_data());
@@ -194,20 +199,28 @@ impl KeyboardData {
 
     /// Sets a specific key in the keyboard matrix to a colour
     pub fn set_key_colour(&mut self, row: usize, col: usize, r: u8, g: u8, b: u8) {
-        if row >= ROWS { return }
-        if col >= KEYS_PER_ROW { return }
+        if row >= ROWS {
+            return;
+        }
+        if col >= KEYS_PER_ROW {
+            return;
+        }
         self.rows[row].set_key_color(col, r, g, b)
     }
 
     /// Sets a horizontal row on the keyboard to a colour
     pub fn set_row_colour(&mut self, row: usize, r: u8, g: u8, b: u8) {
-        if row >= ROWS { return }
+        if row >= ROWS {
+            return;
+        }
         self.rows[row].set_row_color(r, g, b)
     }
 
     /// Sets a vertical column on the keyboard to a colour
     pub fn set_col_colour(&mut self, col: usize, r: u8, g: u8, b: u8) {
-        if col >= KEYS_PER_ROW { return }
+        if col >= KEYS_PER_ROW {
+            return;
+        }
         for row_id in 0..ROWS {
             self.rows[row_id].set_key_color(col, r, g, b)
         }
@@ -230,4 +243,3 @@ impl KeyboardData {
         self.rows[index / KEYS_PER_ROW].keys[index % KEYS_PER_ROW] = col
     }
 }
-
