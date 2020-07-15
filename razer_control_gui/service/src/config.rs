@@ -34,4 +34,16 @@ impl Configuration {
         let res: Configuration = serde_json::from_str(str.as_str())?;
         Ok(res)
     }
+
+    pub fn write_effects_save(json: serde_json::Value) -> io::Result<()> {
+        let j: String = serde_json::to_string_pretty(&json)?;
+        File::create(EFFECTS_FILE)?.write_all(j.as_bytes())?;
+        Ok(())
+    }
+
+    pub fn read_effects_file() -> io::Result<serde_json::Value> {
+        let str = fs::read_to_string(EFFECTS_FILE)?;
+        let res: serde_json::Value = serde_json::from_str(str.as_str())?;
+        Ok(res)
+    }
 }

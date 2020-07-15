@@ -43,6 +43,13 @@ impl Effect for Static {
     fn clone_box(&self) -> Box<dyn Effect> {
         return Box::new(self.clone())
     }
+
+    fn save(&mut self) -> EffectSave {
+        EffectSave {
+            args: self.args.to_vec(),
+            name: String::from("Static")
+        }
+    }
 }
 
 
@@ -100,6 +107,13 @@ impl Effect for StaticGradient {
 
     fn clone_box(&self) -> Box<dyn Effect> {
         return Box::new(self.clone())
+    }
+
+    fn save(&mut self) -> EffectSave {
+        EffectSave {
+            args: self.args.to_vec(),
+            name: String::from("Static Gradient")
+        }
     }
 }
 
@@ -168,6 +182,13 @@ impl Effect for WaveGradient {
 
     fn clone_box(&self) -> Box<dyn Effect> {
         return Box::new(self.clone())
+    }
+
+    fn save(&mut self) -> EffectSave {
+        EffectSave {
+            args: self.args.to_vec(),
+            name: String::from("Wave Gradient")
+        }
     }
 }
 
@@ -274,5 +295,12 @@ impl Effect for BreathSingle {
 
     fn clone_box(&self) -> Box<dyn Effect> {
         return Box::new(self.clone())
+    }
+
+    fn save(&mut self) -> EffectSave {
+        EffectSave {
+            args: self.args.to_vec(),
+            name: String::from("Breathing Single")
+        }
     }
 }

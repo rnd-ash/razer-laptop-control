@@ -9,12 +9,20 @@ use signal_hook::{iterator::Signals, SIGINT, SIGTERM};
 use std::io::Read;
 use std::os::unix::net::{UnixListener, UnixStream};
 use std::thread;
+use lazy_static::lazy_static;
+use std::sync::{Mutex};
+
+lazy_static! {
+    static ref EFFECT_MANAGER : Mutex<kbd::EffectManager> = Mutex::new(kbd::EffectManager::new());
+}
+
+fn push_effect(effect: Box<dyn Effect>, mask: [bool; 90]) {
+    EFFECT_MANAGER.lock().unwrap().push_effect(effect, mask)
+}
 
 // Main function for daemon
 fn main() {
     // Setup driver core frameworks
-
-    let mut manager = kbd::EffectManager::new();
     let e1 = kbd::effects::WaveGradient::new(vec![255, 0, 0, 0, 0, 255, 0]);
     let e2 = kbd::effects::BreathSingle::new(vec![255, 255, 0, 10]);
     let mut mask : [bool; 90] = [
@@ -25,8 +33,7 @@ fn main() {
         false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
         true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,
     ];
-    manager.push_effect(e1, mask);
-
+    push_effect(e1, mask);
     mask = [
         true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,
         false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
@@ -35,10 +42,9 @@ fn main() {
         true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,
         false, false, false, false, false, false, false, false, false, false, false, false, false, false, false
     ];
-    manager.push_effect(e2, mask);
-
+    push_effect(e2, mask);
     std::thread::spawn(move || loop {
-        manager.update();
+        EFFECT_MANAGER.lock().unwrap().update();
         std::thread::sleep(std::time::Duration::from_millis(33));
     });
 
@@ -65,6 +71,8 @@ fn main() {
         for _ in signals.forever() {
             println!("Received signal, cleaning up");
             cfg.write_to_file().unwrap();
+            let json = EFFECT_MANAGER.lock().unwrap().save();
+            config::Configuration::write_effects_save(json).unwrap();
             if std::fs::metadata(comms::SOCKET_PATH).is_ok() {
                 std::fs::remove_file(comms::SOCKET_PATH).unwrap();
                 if let Err(_) = cfg.write_to_file() {
