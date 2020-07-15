@@ -2,52 +2,69 @@ extern crate tiny_nix_ipc;
 
 mod comms;
 mod config;
-mod daemon_core;
-mod effects;
-mod rgb;
+mod driver_sysfs;
+mod kbd;
+use crate::kbd::Effect;
 use signal_hook::{iterator::Signals, SIGINT, SIGTERM};
-use std::io::{Read, Write};
+use std::io::Read;
 use std::os::unix::net::{UnixListener, UnixStream};
-use std::{error::Error, sync, thread};
+use std::thread;
 
 // Main function for daemon
 fn main() {
     // Setup driver core frameworks
-    let mut drv_core = daemon_core::DriverHandler::new().expect("Error. Is kernel module loaded?");
+
+    let mut manager = kbd::EffectManager::new();
+    let e1 = kbd::effects::WaveGradient::new(vec![255, 0, 0, 0, 0, 255, 0]);
+    let e2 = kbd::effects::BreathSingle::new(vec![255, 255, 0, 10]);
+    let mut mask : [bool; 90] = [
+        false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+        true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,
+        false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+        true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,
+        false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+        true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,
+    ];
+    manager.push_effect(e1, mask);
+
+    mask = [
+        true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,
+        false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+        true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,
+        false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+        true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,
+        false, false, false, false, false, false, false, false, false, false, false, false, false, false, false
+    ];
+    manager.push_effect(e2, mask);
+
+    std::thread::spawn(move || loop {
+        manager.update();
+        std::thread::sleep(std::time::Duration::from_millis(33));
+    });
+
+
+    if driver_sysfs::get_path().is_none() {
+        eprintln!("Error. Kernel module not found!");
+        std::process::exit(1);
+    }
+
     let mut cfg: config::Configuration;
     if let Ok(config) = config::Configuration::read_from_config() {
         cfg = config;
-        drv_core.write_brightness(cfg.brightness);
-        drv_core.write_fan_rpm(cfg.fan_rpm);
-        drv_core.write_power(cfg.power_mode);
+        driver_sysfs::write_brightness(cfg.brightness);
+        driver_sysfs::write_fan_rpm(cfg.fan_rpm);
+        driver_sysfs::write_power(cfg.power_mode);
     } else {
         println!("No configuration file found, creating a new one");
         cfg = config::Configuration::new();
     }
 
-    let mut effects: effects::EffectManager;
-    if let Some(e) = config::Configuration::load_effects() {
-        effects = e;
-    } else {
-        println!("No effects file found, creating a new one");
-        effects = effects::EffectManager::new();
-        // Add a new layer (Static Green)
-        effects.push_effect(Box::new(effects::StaticEffect::new(0, 255, 0)), &[true; 90]);
-    }
-
-    thread::spawn(move || loop {
-        effects.update(&mut drv_core);
-    });
-
     // Signal handler - cleanup if we are told to exit
-    let signals = Signals::new(&[SIGINT, SIGINT]).unwrap();
-    thread::spawn(move || {
+    let signals = Signals::new(&[SIGINT, SIGTERM]).unwrap();
+    let clean_thread = thread::spawn(move || {
         for _ in signals.forever() {
             println!("Received signal, cleaning up");
             cfg.write_to_file().unwrap();
-            if let Some(s) = effects.clone().get_save() {
-                config::Configuration::save_effects(s);
-            }
             if std::fs::metadata(comms::SOCKET_PATH).is_ok() {
                 std::fs::remove_file(comms::SOCKET_PATH).unwrap();
                 if let Err(_) = cfg.write_to_file() {
@@ -76,9 +93,9 @@ fn main() {
         for stream in listener.incoming() {
             match stream {
                 Ok(stream) => {
-                    handle_data(stream, &mut drv_core);
+                    handle_data(stream);
                 }
-                Err(err) => {
+                Err(_) => {
                     eprintln!("WARN: Broken stream, ignored");
                     break;
                 }
@@ -88,12 +105,13 @@ fn main() {
         eprintln!("Could not create Unix socket!");
         std::process::exit(1);
     }
+    clean_thread.join().unwrap();
 }
 
-fn handle_data(mut stream: UnixStream, handler: &mut daemon_core::DriverHandler) {
+fn handle_data(mut stream: UnixStream) {
     let mut buffer = [0 as u8; 4096];
     match stream.read(&mut buffer) {
-        Ok(size) => handler.process_payload(&buffer, stream),
+        Ok(size) => println!("Found {} bytes", size),
         Err(_) => {}
     }
 }

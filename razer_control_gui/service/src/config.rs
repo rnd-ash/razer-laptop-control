@@ -1,4 +1,3 @@
-use crate::effects;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::fs::File;
@@ -34,20 +33,5 @@ impl Configuration {
         let str = fs::read_to_string(SETTINGS_FILE)?;
         let res: Configuration = serde_json::from_str(str.as_str())?;
         Ok(res)
-    }
-
-    pub fn save_effects(mut e: serde_json::Value) -> io::Result<()> {
-        let j: String = serde_json::to_string_pretty(&e)?;
-        File::create(EFFECTS_FILE)?.write_all(j.as_bytes())?;
-        Ok(())
-    }
-
-    pub fn load_effects() -> Option<effects::EffectManager> {
-        if let Ok(str) = fs::read_to_string(EFFECTS_FILE) {
-            if let Ok(json) = serde_json::from_str::<serde_json::Value>(str.as_str()) {
-                return effects::EffectManager::from_save(json);
-            }
-        }
-        return None;
     }
 }

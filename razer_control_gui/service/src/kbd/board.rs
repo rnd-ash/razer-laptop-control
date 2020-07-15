@@ -1,6 +1,7 @@
-use crate::daemon_core;
+use crate::driver_sysfs;
 use std::cmp::Ordering;
 use std::ops;
+
 
 // -- RGB Key channel --
 
@@ -44,7 +45,14 @@ impl AnimatorKeyColour {
         return input as u8;
     }
 
-    
+    pub fn divide(&mut self, divisor: f32) -> AnimatorKeyColour {
+        AnimatorKeyColour {
+            red: self.red / divisor,
+            green: self.green / divisor,
+            blue: self.blue / divisor
+        }
+    }
+
     pub fn get_clamped_colour(&self) -> KeyColour {
         KeyColour {
             red: AnimatorKeyColour::clamp_colour(self.red),
@@ -180,21 +188,21 @@ impl KeyboardData {
         };
     }
 
-    pub fn set_brightness(&mut self, val: u8, handler: &mut daemon_core::DriverHandler) -> bool {
-        handler.write_brightness(val)
+    pub fn set_brightness(&mut self, val: u8) -> bool {
+        driver_sysfs::write_brightness(val)
     }
 
-    pub fn get_brightness(&mut self, handler: &mut daemon_core::DriverHandler) -> u8 {
-        self.brightness = handler.read_brightness();
+    pub fn get_brightness(&mut self) -> u8 {
+        self.brightness = driver_sysfs::read_brightness();
         self.brightness
     }
 
-    pub fn update_kbd(&mut self, handler: &mut daemon_core::DriverHandler) -> bool {
+    pub fn update_kbd(&mut self) -> bool {
         let mut all_vals = Vec::<u8>::with_capacity(3 * KEYS_PER_ROW * ROWS);
         for row in self.rows.iter_mut() {
             all_vals.extend(&row.get_row_data());
         }
-        handler.write_rgb_map(all_vals)
+        driver_sysfs::write_rgb_map(all_vals)
     }
 
     /// Sets a specific key in the keyboard matrix to a colour
@@ -234,7 +242,7 @@ impl KeyboardData {
     }
 
     /// Returns a specific key
-    pub fn get_key_at(&mut self, index: usize) -> KeyColour {
+    pub fn get_key_at(self, index: usize) -> KeyColour {
         self.rows[index / KEYS_PER_ROW].keys[index % KEYS_PER_ROW]
     }
 
