@@ -3,20 +3,20 @@ mod config;
 mod driver_sysfs;
 mod kbd;
 use crate::kbd::Effect;
-use signal_hook::{iterator::Signals, SIGINT, SIGTERM};
-use std::os::unix::net::UnixStream;
-use std::io::{Read, Write};
-use std::io::prelude::*;
-use std::thread;
 use lazy_static::lazy_static;
-use std::sync::{Mutex};
+use signal_hook::{iterator::Signals, SIGINT, SIGTERM};
+use std::io::prelude::*;
+use std::io::{Read, Write};
+use std::os::unix::net::UnixStream;
+use std::sync::Mutex;
+use std::thread;
 
 lazy_static! {
-    static ref EFFECT_MANAGER : Mutex<kbd::EffectManager> = Mutex::new(kbd::EffectManager::new());
-    static ref CONFIG : Mutex<config::Configuration> = {
+    static ref EFFECT_MANAGER: Mutex<kbd::EffectManager> = Mutex::new(kbd::EffectManager::new());
+    static ref CONFIG: Mutex<config::Configuration> = {
         match config::Configuration::read_from_config() {
             Ok(c) => Mutex::new(c),
-            Err(_) => Mutex::new(config::Configuration::new())
+            Err(_) => Mutex::new(config::Configuration::new()),
         }
     };
 }
@@ -68,7 +68,7 @@ fn main() {
         for stream in listener.incoming() {
             match stream {
                 Ok(stream) => handle_data(stream),
-                Err(_) => {}, // Don't care about this
+                Err(_) => {} // Don't care about this
             }
         }
     } else {
@@ -84,7 +84,7 @@ fn handle_data(mut stream: UnixStream) {
         return;
     }
 
-    if let Some(cmd) =  comms::read_from_socket_req(&buffer) {
+    if let Some(cmd) = comms::read_from_socket_req(&buffer) {
         if let Some(s) = process_client_request(cmd) {
             if let Ok(x) = bincode::serialize(&s) {
                 stream.write_all(&x).unwrap();
@@ -99,19 +99,33 @@ pub fn process_client_request(cmd: comms::DaemonCommand) -> Option<comms::Daemon
             let fan_rpm = CONFIG.lock().unwrap().fan_rpm;
             let pwr = CONFIG.lock().unwrap().power_mode;
             Some(comms::DaemonResponse::GetCfg { fan_rpm, pwr })
+        }
+        comms::DaemonCommand::SetPowerMode { pwr } => {
+            if let  Ok(mut x) = CONFIG.lock() {
+                x.power_mode = pwr;
+                x.write_to_file().unwrap();
+            }
+            Some(comms::DaemonResponse::SetPowerMode { result: driver_sysfs::write_power(pwr) })
         },
-        comms::DaemonCommand::SetPowerMode{ pwr} => Some(comms::DaemonResponse::SetPowerMode { result: driver_sysfs::write_power(pwr) } ),
-        comms::DaemonCommand::SetFanSpeed{ rpm} => Some(comms::DaemonResponse::SetFanSpeed { result: driver_sysfs::write_fan_rpm(rpm)} ),
-        comms::DaemonCommand::GetKeyboardRGB{ layer } => {
+        comms::DaemonCommand::SetFanSpeed { rpm } => {
+            if let  Ok(mut x) = CONFIG.lock() {
+                x.fan_rpm = rpm;
+                x.write_to_file().unwrap();
+            }
+            Some(comms::DaemonResponse::SetFanSpeed { result: driver_sysfs::write_fan_rpm(rpm) })
+        },
+        comms::DaemonCommand::GetKeyboardRGB { layer } => {
             let map = EFFECT_MANAGER.lock().unwrap().get_map(layer);
             Some(comms::DaemonResponse::GetKeyboardRGB {
                 layer,
                 rgbdata: map,
             })
         }
+        comms::DaemonCommand::GetFanSpeed() => Some(comms::DaemonResponse::GetFanSpeed { rpm: driver_sysfs::read_fan_rpm() }),
+        comms::DaemonCommand::GetPwrLevel() => Some(comms::DaemonResponse::GetPwrLevel { pwr: driver_sysfs::read_power() }),
         _ => {
             eprintln!("Error. Unrecognised request!");
             None
-        },
-    }
+        }
+    };
 }

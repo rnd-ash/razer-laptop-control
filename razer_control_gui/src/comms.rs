@@ -1,6 +1,6 @@
-use serde::{Serialize, Deserialize};
-use std::os::unix::net::{UnixListener, UnixStream};
+use serde::{Deserialize, Serialize};
 use std::io::{Read, Write};
+use std::os::unix::net::{UnixListener, UnixStream};
 
 /// Razer laptop control socket path
 pub const SOCKET_PATH: &'static str = "/tmp/razercontrol-socket";
@@ -8,20 +8,24 @@ pub const SOCKET_PATH: &'static str = "/tmp/razercontrol-socket";
 #[derive(Serialize, Deserialize, Debug)]
 /// Represents data sent TO the daemon
 pub enum DaemonCommand {
-    SetFanSpeed{ rpm: i32 }, // Fan speed
-    SetPowerMode{ pwr: u8 }, // Power mode
-    GetKeyboardRGB{ layer: i32 }, // Layer ID
-    GetCfg(), // Request curr settings for fan + power
+    SetFanSpeed { rpm: i32 },      // Fan speed
+    GetFanSpeed(),                 // Get (Fan speed)
+    SetPowerMode { pwr: u8 },      // Power mode
+    GetPwrLevel(),                 // Get (Power mode)
+    GetKeyboardRGB { layer: i32 }, // Layer ID
+    GetCfg(),                      // Request curr settings for fan + power
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 /// Represents data sent back from Daemon after it receives
-/// a command. 
+/// a command.
 pub enum DaemonResponse {
-    SetFanSpeed{ result: bool }, // Response
-    SetPowerMode{ result: bool }, // Response
-    GetKeyboardRGB{ layer: i32, rgbdata: Vec<u8> }, // Response (RGB) of 90 keys
-    GetCfg{ fan_rpm: i32, pwr: u8 }, // Fan speed, power mode
+    SetFanSpeed { result: bool },                    // Response
+    GetFanSpeed { rpm: i32 },                        // Get (Fan speed)
+    SetPowerMode { result: bool },                   // Response
+    GetPwrLevel { pwr: u8 },                         // Get (Power mode)
+    GetKeyboardRGB { layer: i32, rgbdata: Vec<u8> }, // Response (RGB) of 90 keys
+    GetCfg { fan_rpm: i32, pwr: u8 },                // Fan speed, power mode
 }
 
 pub fn bind() -> Option<UnixStream> {
@@ -58,8 +62,8 @@ pub fn send_to_daemon(command: DaemonCommand, mut sock: UnixStream) -> Option<Da
                 Err(_) => {
                     eprintln!("Read failed!");
                     None
-                },
-            }
+                }
+            };
         } else {
             eprintln!("Socket write failed!");
         }
@@ -74,7 +78,7 @@ fn read_from_socked_resp(bytes: &[u8]) -> Option<DaemonResponse> {
         Ok(res) => {
             println!("RES: {:?}", res);
             return Some(res);
-        },
+        }
         Err(e) => {
             println!("RES ERROR: {}", e);
             return None;
@@ -89,7 +93,7 @@ pub fn read_from_socket_req(bytes: &[u8]) -> Option<DaemonCommand> {
         Ok(res) => {
             println!("REQ: {:?}", res);
             return Some(res);
-        },
+        }
         Err(e) => {
             println!("REQ ERROR: {}", e);
             return None;

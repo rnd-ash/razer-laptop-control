@@ -1,10 +1,8 @@
-pub mod effects;
 mod board;
-use std::time::{SystemTime, UNIX_EPOCH};
+pub mod effects;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-
-
+use std::time::{SystemTime, UNIX_EPOCH};
 
 const ANIMATION_FPS: u64 = 30; // 33 ms ~= 30fps
 
@@ -12,9 +10,9 @@ pub const ANIMATION_SLEEP_MS: u64 = (1000.0 / ANIMATION_FPS as f32) as u64;
 
 pub fn get_millis() -> u128 {
     SystemTime::now()
-    .duration_since(UNIX_EPOCH)
-    .unwrap()
-    .as_millis()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_millis()
 }
 
 #[derive(Serialize, Deserialize)]
@@ -27,16 +25,20 @@ pub struct EffectSave {
 /// An effect is a lighting function that is updated 30 times per seonc
 /// in order to create an animation of some description on the laptop's
 /// keyboard
-pub trait Effect : Send + Sync {
+pub trait Effect: Send + Sync {
     /// Returns a new instance of an Effect
-    fn new(args: Vec<u8>) -> Box<dyn Effect> where Self: Sized;
+    fn new(args: Vec<u8>) -> Box<dyn Effect>
+    where
+        Self: Sized;
     /// Updates the keyboard, returning the current state of the keyboard
     /// Called 30 times per second by the Effect Manager
     fn update(&mut self) -> board::KeyboardData;
     /// Returns the arguments used to spawn the effect
     fn get_varargs(&mut self) -> &[u8];
     /// Returns the name of the effect (Unique identifier)
-    fn get_name() -> &'static str where Self: Sized;
+    fn get_name() -> &'static str
+    where
+        Self: Sized;
     fn clone_box(&self) -> Box<dyn Effect>;
     fn save(&mut self) -> EffectSave;
     fn get_state(&mut self) -> Vec<u8>;
@@ -57,9 +59,9 @@ unsafe impl Sync for EffectLayer {}
 impl EffectLayer {
     fn new(effect: Box<dyn Effect>, mask: [bool; 90]) -> EffectLayer {
         return EffectLayer {
-            key_mask : mask.to_vec(),
+            key_mask: mask.to_vec(),
             effect,
-        }
+        };
     }
 
     fn update(&mut self) -> board::KeyboardData {
@@ -94,23 +96,20 @@ impl EffectLayer {
         }
         let name: String = serde_json::from_value(json["name"].clone()).unwrap();
         let args: Vec<u8> = serde_json::from_value(json["args"].clone()).unwrap();
-        
+
         let effect: Option<Box<dyn Effect>> = match name.as_str() {
             "Static" => Some(effects::Static::new(args)),
             "Wave Gradient" => Some(effects::WaveGradient::new(args)),
             "Breathing Single" => Some(effects::BreathSingle::new(args)),
-            _ => None
+            _ => None,
         };
         if effect.is_none() {
-            eprintln!(
-                "Effect failed to load. Invalid name: {}",
-                name
-            );
+            eprintln!("Effect failed to load. Invalid name: {}", name);
             return None;
         }
         return Some(EffectLayer {
             key_mask,
-            effect: effect.unwrap()
+            effect: effect.unwrap(),
         });
     }
 
@@ -135,7 +134,7 @@ impl EffectManager {
     pub fn new() -> EffectManager {
         EffectManager {
             layers: vec![],
-            last_update_ms : get_millis(),
+            last_update_ms: get_millis(),
             render_board: board::KeyboardData::new(),
         }
     }
@@ -165,11 +164,8 @@ impl EffectManager {
     pub fn save(&mut self) -> serde_json::value::Value {
         let mut save_json = json!({"effects" : []});
 
-        let tmp_saves : Vec<Option<serde_json::Value>> = self
-        .layers
-        .iter_mut()
-        .map(|l| l.get_save())
-        .collect();
+        let tmp_saves: Vec<Option<serde_json::Value>> =
+            self.layers.iter_mut().map(|l| l.get_save()).collect();
 
         for save in tmp_saves {
             if let Some(x) = save {
@@ -196,10 +192,11 @@ impl EffectManager {
     }
 
     pub fn get_map(&mut self, layer_id: i32) -> Vec<u8> {
-        if layer_id < 0 { // Requesting global layer
+        if layer_id < 0 {
+            // Requesting global layer
             return self.render_board.get_curr_state();
         } else {
-            return self.layers[layer_id as usize].get_state()
+            return self.layers[layer_id as usize].get_state();
         }
     }
 }

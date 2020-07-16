@@ -18,7 +18,7 @@ impl Effect for Static {
     {
         let mut kbd = board::KeyboardData::new();
         kbd.set_kbd_colour(args[0], args[1], args[2]);
-        let s = Static { 
+        let s = Static {
             kbd,
             args: [args[0], args[1], args[2]],
         };
@@ -36,18 +36,18 @@ impl Effect for Static {
         return "Static";
     }
 
-    fn get_varargs(& mut self) -> &[u8] {
+    fn get_varargs(&mut self) -> &[u8] {
         &self.args
     }
 
     fn clone_box(&self) -> Box<dyn Effect> {
-        return Box::new(self.clone())
+        return Box::new(self.clone());
     }
 
     fn save(&mut self) -> EffectSave {
         EffectSave {
             args: self.args.to_vec(),
-            name: String::from("Static")
+            name: String::from("Static"),
         }
     }
 
@@ -55,7 +55,6 @@ impl Effect for Static {
         self.kbd.get_curr_state()
     }
 }
-
 
 ///
 /// STATIC_BLEND KEYBOARD EFFECT
@@ -70,45 +69,48 @@ pub struct StaticGradient {
 
 impl Effect for StaticGradient {
     fn new(args: Vec<u8>) -> Box<dyn Effect>
-    where Self: Sized {
+    where
+        Self: Sized,
+    {
         let mut kbd = board::KeyboardData::new();
-        let args : [u8; 7] = [args[0], args[1], args[2], args[3], args[4], args[5], args[6]];
+        let args: [u8; 7] = [
+            args[0], args[1], args[2], args[3], args[4], args[5], args[6],
+        ];
         let mut c1 = board::AnimatorKeyColour::new_u(args[0], args[1], args[2]);
         let c2 = board::AnimatorKeyColour::new_u(args[3], args[4], args[5]);
-        let delta = (c2-c1).divide(14.0);
+        let delta = (c2 - c1).divide(14.0);
         for i in 0..15 {
             let clamped = c1.get_clamped_colour();
             kbd.set_col_colour(i, clamped.red, clamped.green, clamped.blue);
             c1 += delta;
         }
 
-        Box::new(StaticGradient {
-            kbd,
-            args
-        })
+        Box::new(StaticGradient { kbd, args })
     }
 
-    fn update(& mut self) -> board::KeyboardData {
+    fn update(&mut self) -> board::KeyboardData {
         self.kbd // Nothing to update
     }
 
     fn get_name() -> &'static str
-    where Self: Sized {
+    where
+        Self: Sized,
+    {
         "Static Gradient"
     }
 
-    fn get_varargs(& mut self) -> &[u8] {
+    fn get_varargs(&mut self) -> &[u8] {
         return &self.args;
     }
 
     fn clone_box(&self) -> Box<dyn Effect> {
-        return Box::new(self.clone())
+        return Box::new(self.clone());
     }
 
     fn save(&mut self) -> EffectSave {
         EffectSave {
             args: self.args.to_vec(),
-            name: String::from("Static Gradient")
+            name: String::from("Static Gradient"),
         }
     }
 
@@ -116,7 +118,6 @@ impl Effect for StaticGradient {
         self.kbd.get_curr_state()
     }
 }
-
 
 ///
 /// STATIC_BLEND KEYBOARD EFFECT
@@ -126,21 +127,25 @@ impl Effect for StaticGradient {
 pub struct WaveGradient {
     kbd: board::KeyboardData,
     args: [u8; 7],
-    colour_band : Vec<board::AnimatorKeyColour>,
+    colour_band: Vec<board::AnimatorKeyColour>,
 }
 
 impl Effect for WaveGradient {
     fn new(args: Vec<u8>) -> Box<dyn Effect>
-    where Self: Sized {
-        let args : [u8; 7] = [args[0], args[1], args[2], args[3], args[4], args[5], args[6]];
-        let mut wave= WaveGradient {
+    where
+        Self: Sized,
+    {
+        let args: [u8; 7] = [
+            args[0], args[1], args[2], args[3], args[4], args[5], args[6],
+        ];
+        let mut wave = WaveGradient {
             kbd: board::KeyboardData::new(),
             args,
-            colour_band: vec![]
+            colour_band: vec![],
         };
         let mut c1 = board::AnimatorKeyColour::new_u(args[0], args[1], args[2]);
         let mut c2 = board::AnimatorKeyColour::new_u(args[3], args[4], args[5]);
-        let c_delta = (c2-c1).divide(15.0);
+        let c_delta = (c2 - c1).divide(15.0);
         for i in 0..15 {
             wave.colour_band.push(c1);
             c1 += c_delta;
@@ -152,7 +157,7 @@ impl Effect for WaveGradient {
         Box::new(wave)
     }
 
-    fn update(& mut self) -> board::KeyboardData {
+    fn update(&mut self) -> board::KeyboardData {
         for i in 0..15 {
             let c = self.colour_band[i].get_clamped_colour();
             self.kbd.set_col_colour(i, c.red, c.green, c.blue);
@@ -162,22 +167,24 @@ impl Effect for WaveGradient {
     }
 
     fn get_name() -> &'static str
-    where Self: Sized {
+    where
+        Self: Sized,
+    {
         "Wave Gradient"
     }
 
-    fn get_varargs(& mut self) -> &[u8] {
+    fn get_varargs(&mut self) -> &[u8] {
         return &self.args;
     }
 
     fn clone_box(&self) -> Box<dyn Effect> {
-        return Box::new(self.clone())
+        return Box::new(self.clone());
     }
 
     fn save(&mut self) -> EffectSave {
         EffectSave {
             args: self.args.to_vec(),
-            name: String::from("Wave Gradient")
+            name: String::from("Wave Gradient"),
         }
     }
 
@@ -191,7 +198,7 @@ impl Clone for WaveGradient {
         WaveGradient {
             kbd: self.kbd,
             args: self.args,
-            colour_band : self.colour_band.to_vec()
+            colour_band: self.colour_band.to_vec(),
         }
     }
 }
@@ -272,22 +279,24 @@ impl Effect for BreathSingle {
     }
 
     fn get_name() -> &'static str
-    where Self: Sized {
+    where
+        Self: Sized,
+    {
         "Breathing Single"
     }
 
-    fn get_varargs(& mut self) -> &[u8] {
+    fn get_varargs(&mut self) -> &[u8] {
         return &self.args;
     }
 
     fn clone_box(&self) -> Box<dyn Effect> {
-        return Box::new(self.clone())
+        return Box::new(self.clone());
     }
 
     fn save(&mut self) -> EffectSave {
         EffectSave {
             args: self.args.to_vec(),
-            name: String::from("Breathing Single")
+            name: String::from("Breathing Single"),
         }
     }
 

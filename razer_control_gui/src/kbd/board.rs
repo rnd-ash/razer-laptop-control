@@ -2,7 +2,6 @@ use crate::driver_sysfs;
 use std::cmp::Ordering;
 use std::ops;
 
-
 // -- RGB Key channel --
 
 const KEYS_PER_ROW: usize = 15;
@@ -37,7 +36,7 @@ impl AnimatorKeyColour {
         AnimatorKeyColour {
             red: red as f32,
             green: green as f32,
-            blue: blue as f32
+            blue: blue as f32,
         }
     }
 
@@ -57,7 +56,7 @@ impl AnimatorKeyColour {
         AnimatorKeyColour {
             red: self.red / divisor,
             green: self.green / divisor,
-            blue: self.blue / divisor
+            blue: self.blue / divisor,
         }
     }
 
@@ -260,6 +259,6 @@ impl KeyboardData {
         for row in self.rows.iter_mut() {
             all_vals.extend(&row.get_row_data());
         }
-        return all_vals
+        return all_vals;
     }
 }

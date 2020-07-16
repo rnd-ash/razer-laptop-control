@@ -45,7 +45,7 @@ fn write_to_sysfs_raw(sysfs_name: &str, val: Vec<u8>) -> bool {
         Err(x) => {
             eprintln!("SYSFS write to {} failed! - {}", sysfs_name, x);
             false
-        },
+        }
     }
 }
 
@@ -85,7 +85,7 @@ pub fn read_power() -> u8 {
     };
 }
 
-/// Writes fan RPM to sysfs, and returns result of the write 
+/// Writes fan RPM to sysfs, and returns result of the write
 /// # Arguments
 /// * `rpm` - Fan RPM to write to sysfs. 0 imples back to automatic fan
 ///             anything else is interpreted as a litteral RPM
@@ -103,16 +103,8 @@ pub fn write_fan_rpm(rpm: i32) -> bool {
 }
 
 pub fn read_fan_rpm() -> i32 {
-    match read_from_sysfs("fan_rpm") {
-        Some(x) => {
-            if x == "Auto" {
-                return 0;
-            } else {
-                return x.split(" ").map(|s| s.to_string()).collect::<Vec<String>>()[0]
-                    .parse::<i32>()
-                    .unwrap();
-            }
-        }
-        None => return -1,
-    }
+    return match read_from_sysfs("fan_rpm") {
+        Some(x) => x.parse::<i32>().unwrap(),
+        None => 0,
+    };
 }
