@@ -1,0 +1,4 @@
+target/**
+install/**
+pkg/**
+Cargo.lock

@@ -4,7 +4,11 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
-const ANIMATIONS_DELAY_MS: u128 = 33; // 33 ms ~= 30fps
+
+
+const ANIMATION_FPS: u64 = 30; // 33 ms ~= 30fps
+
+pub const ANIMATION_SLEEP_MS: u64 = (1000.0 / ANIMATION_FPS as f32) as u64;
 
 pub fn get_millis() -> u128 {
     SystemTime::now()
@@ -14,7 +18,7 @@ pub fn get_millis() -> u128 {
 }
 
 #[derive(Serialize, Deserialize)]
-struct EffectSave {
+pub struct EffectSave {
     args: Vec<u8>,
     name: String,
 }
@@ -35,6 +39,7 @@ pub trait Effect : Send + Sync {
     fn get_name() -> &'static str where Self: Sized;
     fn clone_box(&self) -> Box<dyn Effect>;
     fn save(&mut self) -> EffectSave;
+    fn get_state(&mut self) -> Vec<u8>;
 }
 
 /// An effect combined with a mask layer.
@@ -92,6 +97,8 @@ impl EffectLayer {
         
         let effect: Option<Box<dyn Effect>> = match name.as_str() {
             "Static" => Some(effects::Static::new(args)),
+            "Wave Gradient" => Some(effects::WaveGradient::new(args)),
+            "Breathing Single" => Some(effects::BreathSingle::new(args)),
             _ => None
         };
         if effect.is_none() {
@@ -105,6 +112,14 @@ impl EffectLayer {
             key_mask,
             effect: effect.unwrap()
         });
+    }
+
+    pub fn get_state(&mut self) -> Vec<u8> {
+        self.effect.get_state()
+    }
+
+    pub fn get_mask(&mut self) -> Vec<bool> {
+        self.key_mask.to_vec()
     }
 }
 pub struct EffectManager {
@@ -177,6 +192,14 @@ impl EffectManager {
             } else {
                 eprintln!("Error adding effect");
             }
+        }
+    }
+
+    pub fn get_map(&mut self, layer_id: i32) -> Vec<u8> {
+        if layer_id < 0 { // Requesting global layer
+            return self.render_board.get_curr_state();
+        } else {
+            return self.layers[layer_id as usize].get_state()
         }
     }
 }

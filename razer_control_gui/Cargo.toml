@@ -9,16 +9,16 @@ edition = "2018"
 
 [[bin]]
 name = "razer-cli"
-path = "src/main_cli.rs"
+path = "src/cli.rs"
 
 [[bin]]
 name = "daemon"
-path = "src/main.rs"
+path = "src/daemon.rs"
 
 [dependencies]
-tiny-nix-ipc = "0.1.1"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 signal-hook = "0.1.16"
 rand = "0.7.3"
 lazy_static = "1.4.0"
+bincode = "1.3.1"

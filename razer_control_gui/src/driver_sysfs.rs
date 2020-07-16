@@ -42,7 +42,10 @@ fn write_to_sysfs(sysfs_name: &str, val_as_str: String) -> bool {
 fn write_to_sysfs_raw(sysfs_name: &str, val: Vec<u8>) -> bool {
     match fs::write(SYSFS_PATH.clone().unwrap() + "/" + sysfs_name, val) {
         Ok(_) => true,
-        Err(_) => false,
+        Err(x) => {
+            eprintln!("SYSFS write to {} failed! - {}", sysfs_name, x);
+            false
+        },
     }
 }
 
@@ -82,7 +85,19 @@ pub fn read_power() -> u8 {
     };
 }
 
-// Fan RPM is read + write
+/// Writes fan RPM to sysfs, and returns result of the write 
+/// # Arguments
+/// * `rpm` - Fan RPM to write to sysfs. 0 imples back to automatic fan
+///             anything else is interpreted as a litteral RPM
+///
+/// # Example
+/// ```
+/// write_fan_rpm(0).unwrap(); // Fan RPM Set to Auto
+/// match write_fan_rpm(5000) { // Ask fan to spin to 5000 RPM
+///     true => println!("Write OK!"),
+///     false => println!("Write FAIL!")
+/// }
+/// ```
 pub fn write_fan_rpm(rpm: i32) -> bool {
     return write_to_sysfs("fan_rpm", String::from(format!("{}", rpm)));
 }

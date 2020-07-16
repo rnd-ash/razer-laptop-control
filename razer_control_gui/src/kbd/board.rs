@@ -29,8 +29,16 @@ pub struct AnimatorKeyColour {
 }
 
 impl AnimatorKeyColour {
-    fn new(red: f32, green: f32, blue: f32) -> AnimatorKeyColour {
+    pub fn new_f(red: f32, green: f32, blue: f32) -> AnimatorKeyColour {
         AnimatorKeyColour { red, green, blue }
+    }
+
+    pub fn new_u(red: u8, green: u8, blue: u8) -> AnimatorKeyColour {
+        AnimatorKeyColour {
+            red: red as f32,
+            green: green as f32,
+            blue: blue as f32
+        }
     }
 
     /// Clamps a f32 between 0 and 255, returns a `u8`
@@ -198,11 +206,7 @@ impl KeyboardData {
     }
 
     pub fn update_kbd(&mut self) -> bool {
-        let mut all_vals = Vec::<u8>::with_capacity(3 * KEYS_PER_ROW * ROWS);
-        for row in self.rows.iter_mut() {
-            all_vals.extend(&row.get_row_data());
-        }
-        driver_sysfs::write_rgb_map(all_vals)
+        driver_sysfs::write_rgb_map(self.get_curr_state())
     }
 
     /// Sets a specific key in the keyboard matrix to a colour
@@ -249,5 +253,13 @@ impl KeyboardData {
     /// Internal function used only for the combining of effect layers
     pub fn set_key_at(&mut self, index: usize, col: KeyColour) {
         self.rows[index / KEYS_PER_ROW].keys[index % KEYS_PER_ROW] = col
+    }
+
+    pub fn get_curr_state(&mut self) -> Vec<u8> {
+        let mut all_vals = Vec::<u8>::with_capacity(3 * KEYS_PER_ROW * ROWS);
+        for row in self.rows.iter_mut() {
+            all_vals.extend(&row.get_row_data());
+        }
+        return all_vals
     }
 }
