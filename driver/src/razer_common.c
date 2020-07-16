@@ -13,7 +13,7 @@
 MODULE_AUTHOR("Ashcon Mohseninia");
 MODULE_DESCRIPTION("Razer system control driver for laptops");
 MODULE_LICENSE("GPL");
-MODULE_VERSION("1.1.0");
+MODULE_VERSION("1.2.0");
 
 static int loaded = 0;
 static razer_laptop laptop = {0x00};
@@ -49,32 +49,12 @@ static ssize_t key_colour_map_store(struct device *dev, struct device_attribute 
 	return count;
 }
 
-static ssize_t brightness_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
-
-	unsigned long brightness;
-	if (kstrtol(buf, 10, &brightness)) { // Convert users input to integer
-		#ifdef DEBUG
-		dev_warn(dev, "User entered an invalid input for brightness");
-		#endif
-		return -EINVAL;
-	}
-
-	if (brightness > 255 || brightness < 0) {
-		#ifdef DEBUG
-		dev_warn(dev, "User entered an invalid input for brightness");
-		#endif
-		return -EINVAL;
-	}
-
-	mutex_lock(&laptop.lock);
-	sendBrightness(laptop.usb_dev, (__u8) brightness);
-	mutex_unlock(&laptop.lock);
-	return count;
-}
-
-static ssize_t brightness_show(struct device *dev, struct device_attribute *attr, char *buf)
+/**
+ * Returns the name of the device
+ */
+static ssize_t product_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-	return sprintf(buf, "%d\n", (__u8)getBrightness(laptop.usb_dev));
+	return sprintf(buf, "%s\n", getDeviceDescription(laptop.product_id));
 }
 
 /**
@@ -82,11 +62,7 @@ static ssize_t brightness_show(struct device *dev, struct device_attribute *attr
  */
 static ssize_t fan_rpm_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-
-	if (laptop.fan_rpm == 0)
-		return sprintf(buf, "%s", "Auto\n");
-
-	return sprintf(buf, "%d RPM\n", laptop.fan_rpm);
+	return sprintf(buf, "%d\n", laptop.fan_rpm);
 }
 
 /**
@@ -94,13 +70,7 @@ static ssize_t fan_rpm_show(struct device *dev, struct device_attribute *attr, c
  */
 static ssize_t power_mode_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-
-	if (laptop.power_mode == 0)
-		return sprintf(buf, "%s", "Balanced (0)\n");
-	else if (laptop.power_mode == 1)
-		return sprintf(buf, "%s", "Gaming (1)\n");
-
-	return sprintf(buf, "%s", "Creator (2)\n");
+	return sprintf(buf, "%d\n", laptop.power_mode);
 }
 
 static ssize_t fan_rpm_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
@@ -144,7 +114,7 @@ static ssize_t power_mode_store(struct device *dev, struct device_attribute *att
 static DEVICE_ATTR_RW(fan_rpm);
 static DEVICE_ATTR_RW(power_mode);
 static DEVICE_ATTR_WO(key_colour_map);
-static DEVICE_ATTR_RW(brightness);
+static DEVICE_ATTR_RO(product);
 
 static int backlight_sysfs_set(struct led_classdev *led_cdev, enum led_brightness brightness) {
     return sendBrightness(laptop.usb_dev, (__u8) brightness);
@@ -193,7 +163,7 @@ static int razer_laptop_probe(struct hid_device *hdev, const struct hid_device_i
     device_create_file(&hdev->dev, &dev_attr_fan_rpm);
     device_create_file(&hdev->dev, &dev_attr_power_mode);
     device_create_file(&hdev->dev, &dev_attr_key_colour_map);
-    device_create_file(&hdev->dev, &dev_attr_brightness);
+    device_create_file(&hdev->dev, &dev_attr_product);
 
     // Now init the backlight stuff - Only do it once!
     if (!loaded) {
@@ -224,7 +194,7 @@ static void razer_laptop_remove(struct hid_device *hdev) {
     device_remove_file(&hdev->dev, &dev_attr_fan_rpm);
     device_remove_file(&hdev->dev, &dev_attr_power_mode);
     device_remove_file(&hdev->dev, &dev_attr_key_colour_map);
-    device_remove_file(&hdev->dev, &dev_attr_brightness);
+    device_remove_file(&hdev->dev, &dev_attr_product);
     if (loaded) { // Ensure this only happens once!
         led_classdev_unregister(&kbd_backlight);
         loaded = 0;
