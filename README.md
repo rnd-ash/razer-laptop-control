@@ -9,12 +9,17 @@ Designed to be a replacment driver to openrazer project with additional support 
 
 ## Repo contents
 ### Driver
-This is the driver for the project. Install it to control fan speed, power mode (See README in driver folder)
+Kernel module required for the software to work
 
-## rgbtestservice
-A test project to control the fan speed, RGB backlight and power target in userspace
+## razer_control_gui
+** Experimental**
+Test suite for Rust based daemon, CLI and GUI for controlling the driver, and setting custom keyboard effects
 
 # Changelog
+
+## 1.2.1 - 17/07/2020
+* Added initial rust based Daemon - see razer_control_gui for more details
+* Removed useless printk calls in kernel module - DMESG output should not longer be cluttered
 
 ## 1.1.0 - 08/07/2020
 * Re-wrote the kernel driver (Made my life easier for the future)
