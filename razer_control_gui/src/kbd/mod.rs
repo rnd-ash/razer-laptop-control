@@ -145,9 +145,18 @@ impl EffectManager {
 
     pub fn pop_effect(&mut self) {
         self.layers.pop();
+        // If no more layers, erase keyboard rendering and set it to black
+        if self.layers.len() == 0 {
+            self.render_board.set_kbd_colour(0, 0, 0); 
+            self.render_board.update_kbd();
+        }
     }
 
     pub fn update(&mut self) {
+        // Do nothing if we have no effects!
+        if self.layers.len() == 0 {
+            return;
+        }
         for layer in self.layers.iter_mut() {
             let tmp_board = layer.update();
             for (pos, state) in layer.key_mask.iter().enumerate() {

@@ -108,3 +108,24 @@ pub fn read_fan_rpm() -> i32 {
         None => 0,
     };
 }
+
+#[derive(PartialEq, Debug, Clone, Copy)]
+pub enum PowerSupply {
+    /// Machine is plugged int (AC)
+    AC,
+    /// Machine is running on battery
+    BAT,
+    UNK
+}
+
+/// Returns the current power supply of the laptop
+pub fn read_power_source() -> PowerSupply {
+    match fs::read_to_string("/sys/class/power_supply/AC0/online") {
+        Ok(s) => match s.as_str().trim_end_matches('\n') {
+            "1" => PowerSupply::AC,
+            "0" => PowerSupply::BAT,
+            _ => PowerSupply::UNK,
+        }
+        Err(_) => PowerSupply::UNK,
+    }
+}

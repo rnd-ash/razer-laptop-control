@@ -27,10 +27,19 @@ fn push_effect(effect: Box<dyn Effect>, mask: [bool; 90]) {
 
 // Main function for daemon
 fn main() {
-    // Start the keyboard animator thread
-    std::thread::spawn(move || loop {
-        EFFECT_MANAGER.lock().unwrap().update();
-        std::thread::sleep(std::time::Duration::from_millis(kbd::ANIMATION_SLEEP_MS));
+    // Start the keyboard animator thread,
+    // This thread also periodically checks the machine power
+    std::thread::spawn(move || {
+        let mut last_psu_status : driver_sysfs::PowerSupply = driver_sysfs::PowerSupply::UNK;
+        loop {
+            EFFECT_MANAGER.lock().unwrap().update();
+            std::thread::sleep(std::time::Duration::from_millis(kbd::ANIMATION_SLEEP_MS));
+            let new_psu = driver_sysfs::read_power_source();
+            if last_psu_status != new_psu {
+                println!("Power source changed! Now {:?}", new_psu);
+            }
+            last_psu_status = new_psu;
+        }
     });
 
     if driver_sysfs::get_path().is_none() {
