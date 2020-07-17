@@ -117,7 +117,7 @@ fn write_pwr_mode(x: i32) {
     if !(x >= 0 && x <= 2) {
         print_help("Power mode must be 0, 1 or 2");
     }
-    if let Some(resp) = send_data(comms::DaemonCommand::SetPowerMode { pwr: x as u8 }) {
+    if let Some(_) = send_data(comms::DaemonCommand::SetPowerMode { pwr: x as u8 }) {
         read_power_mode()
     } else {
         eprintln!("Unknown error!");
@@ -125,7 +125,7 @@ fn write_pwr_mode(x: i32) {
 }
 
 fn write_fan_speed(x: i32) {
-    if let Some(resp) = send_data(comms::DaemonCommand::SetFanSpeed { rpm: x }) {
+    if let Some(_) = send_data(comms::DaemonCommand::SetFanSpeed { rpm: x }) {
         read_fan_rpm()
     } else {
         eprintln!("Unknown error!");
@@ -133,7 +133,7 @@ fn write_fan_speed(x: i32) {
 }
 
 fn write_colour(r: u8, g: u8, b: u8) {
-    if let Some(resp) = send_data(comms::DaemonCommand::SetColour { r, g, b }) {
+    if let Some(_) = send_data(comms::DaemonCommand::SetColour { r, g, b }) {
         read_fan_rpm()
     } else {
         eprintln!("Unknown error!");

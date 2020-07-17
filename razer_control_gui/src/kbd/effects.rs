@@ -146,11 +146,11 @@ impl Effect for WaveGradient {
         let mut c1 = board::AnimatorKeyColour::new_u(args[0], args[1], args[2]);
         let mut c2 = board::AnimatorKeyColour::new_u(args[3], args[4], args[5]);
         let c_delta = (c2 - c1).divide(15.0);
-        for i in 0..15 {
+        for _ in 0..15 {
             wave.colour_band.push(c1);
             c1 += c_delta;
         }
-        for i in 0..15 {
+        for _ in 0..15 {
             wave.colour_band.push(c2);
             c2 -= c_delta;
         }
