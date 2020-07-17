@@ -1,24 +1,25 @@
-# TBA - Control application for RGB / power mode
+# Experimental code in here!
 
-This is a Rust based project to create a daemon, cli, and GUI application to control razer keyboards using my driver
+## Current features
+* Full background daemon - Auto load state on machine startup based on last configuration
+* CLI application for adjusting basic settings
 
-## Daemon
-This is a daemon that sits between any programs wanting to interface with the hardware and the kernel module. This daemon
-is responsible for saving settings (Power modes, RGB effects), and listen for socket events (at /tmp/razersocket) from
-any userspace applications, and process the request
+## Installing
+1. Ensure you have at **least** version 1.2.0 of the kernel module installed
+2. Install cargo or rustc
+3. run install.sh as a normal user
+4. Enjoy!
 
-### Daemon - What works
-* Setup of socket
-* Receiving commands
-* Configuration saving and loading (See /usr/share/razercontrol/ for json saves)
+## Usage of CLI Application
+```
+razer-cli <action> <attribute> <args> 
+```
 
-### Daemon - What is to do
-* Actual API (mod) to send commands to daemon (For custom apps)
-* Background keyboard animations - Rust won't build due to borrow issues right now
+### action
+* read - Read an attribute (get its current state) - No additional args are supplied
+* write - Write an attribute, and save it to configuration - See below for argument counts
 
-
-## CLI App
-TBA - Incomplete
-
-## GUI
-TBA - Not started
+### attribute
+* fan - Fan RPM. ARG: 0 = Auto, anything else is interpreted as a litteral RPM
+* power - Power mode. ARG: 0 = Balanced, 1 = Gaming, 2 = Creator
+* colour - Keyboard colour. ARGS: R G B channels, each channel is set from 0 to 255
