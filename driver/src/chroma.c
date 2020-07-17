@@ -61,9 +61,6 @@ int sendBrightness(struct usb_device *usb, __u8 brightness) {
     packet.args[1] = 0x05;
     packet.args[2] = brightness;
     memcpy(buffer, &packet, 90);
-    #ifdef DEBUG
-    hid_err(usb, "Setting brightness to %d", brightness);
-    #endif
     return send_payload(usb, buffer, 1000, 2000);
 }
 
