@@ -10,6 +10,7 @@ fn print_help(reason: &str) -> ! {
     println!("Help:");
     println!("./razer-cli read <attr>");
     println!("./razer-cli write <attr>");
+    println!("./razer-cli write colour red green blue");
     println!("");
     println!("Where 'attr':");
     println!("- fan -> Cooling fan RPM. 0 is automatic");
@@ -17,6 +18,7 @@ fn print_help(reason: &str) -> ! {
     println!("              0 = Normal");
     println!("              1 = Gaming");
     println!("              2 = Balanced");
+    println!("");
     std::process::exit(ret_code);
 }
 
@@ -39,6 +41,20 @@ fn main() {
             }
         },
         "write" => {
+            // Special case for setting kbd colour
+            if args[2].to_ascii_lowercase().as_str() == "colour" {
+                if args.len() != 6 {
+                    print_help("Invalid number of args. Colour requires 3 params for r,g,b");
+                }
+                let r = args[3].parse::<u8>();
+                let g = args[4].parse::<u8>();
+                let b = args[5].parse::<u8>();
+                if r.is_err() || g.is_err() || b.is_err() {
+                    print_help("Invalid number detected. r,g,b must be between 0 and 255!")
+                }
+                write_colour(r.unwrap(), g.unwrap(), b.unwrap());
+                return;
+            }
             if args.len() != 4 {
                 print_help("Invalid number of args supplied");
             }
@@ -116,3 +132,10 @@ fn write_fan_speed(x: i32) {
     }
 }
 
+fn write_colour(r: u8, g: u8, b: u8) {
+    if let Some(resp) = send_data(comms::DaemonCommand::SetColour { r, g, b }) {
+        read_fan_rpm()
+    } else {
+        eprintln!("Unknown error!");
+    }
+}

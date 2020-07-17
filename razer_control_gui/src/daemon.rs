@@ -44,6 +44,13 @@ fn main() {
         driver_sysfs::write_power(c.power_mode);
         if let Ok(json) = config::Configuration::read_effects_file() {
             EFFECT_MANAGER.lock().unwrap().load_from_save(json);
+        } else {
+            println!("No effects save, creating a new one");
+            // No effects found, start with a green static layer, just like synapse
+            EFFECT_MANAGER.lock().unwrap().push_effect(
+                kbd::effects::Static::new(vec![0, 255, 0]), 
+                [true; 90]
+            );
         }
     }
 
@@ -123,6 +130,20 @@ pub fn process_client_request(cmd: comms::DaemonCommand) -> Option<comms::Daemon
         }
         comms::DaemonCommand::GetFanSpeed() => Some(comms::DaemonResponse::GetFanSpeed { rpm: driver_sysfs::read_fan_rpm() }),
         comms::DaemonCommand::GetPwrLevel() => Some(comms::DaemonResponse::GetPwrLevel { pwr: driver_sysfs::read_power() }),
+        comms::DaemonCommand::SetColour{r, g, b} => {
+            let mut res = false;
+            if let Ok(mut k) = EFFECT_MANAGER.lock() {
+                res = true;
+                k.pop_effect(); // Remove old layer
+                k.push_effect(
+                    kbd::effects::Static::new(vec![r, g, b]), 
+                    [true; 90]
+                );
+            }
+            Some(comms::DaemonResponse::SetColour{result: res})
+        }
+
+
         _ => {
             eprintln!("Error. Unrecognised request!");
             None
