@@ -37,6 +37,8 @@ char *getDeviceDescription(int product_id)
 	        return "Blade 2019 stealth";
 	    case BLADE_2019_STEALTH_GTX:
 	        return "Blade 2019 stealth (With GTX)";
+	    case BLADE_2020_STEALTH:
+		return "Blade 2020 stealth";
 
     // Pro laptops laptops
 	    case BLADE_PRO_2019:

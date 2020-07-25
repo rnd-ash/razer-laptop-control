@@ -13,7 +13,7 @@
 MODULE_AUTHOR("Ashcon Mohseninia");
 MODULE_DESCRIPTION("Razer system control driver for laptops");
 MODULE_LICENSE("GPL");
-MODULE_VERSION("1.2.1");
+MODULE_VERSION("1.2.2");
 
 static int loaded = 0;
 static razer_laptop laptop = {0x00};
@@ -221,6 +221,7 @@ static const struct hid_device_id table[] = {
 	{ HID_USB_DEVICE(RAZER_VENDOR_ID, BLADE_2017_STEALTH_END)},
 	{ HID_USB_DEVICE(RAZER_VENDOR_ID, BLADE_2019_STEALTH)},
 	{ HID_USB_DEVICE(RAZER_VENDOR_ID, BLADE_2019_STEALTH_GTX)},
+	{ HID_USB_DEVICE(RAZER_VENDOR_ID, BLADE_2020_STEALTH)},
 
 	// Pro's
 	{ HID_USB_DEVICE(RAZER_VENDOR_ID, BLADE_2018_PRO_FHD)},
