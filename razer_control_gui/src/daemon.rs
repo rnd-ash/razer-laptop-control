@@ -9,7 +9,7 @@ use std::io::prelude::*;
 use std::io::{Read, Write};
 use std::os::unix::net::UnixStream;
 use std::sync::Mutex;
-use std::thread;
+use std::{thread, time};
 
 lazy_static! {
     static ref EFFECT_MANAGER: Mutex<kbd::EffectManager> = Mutex::new(kbd::EffectManager::new());
@@ -27,6 +27,13 @@ fn push_effect(effect: Box<dyn Effect>, mask: [bool; 90]) {
 
 // Main function for daemon
 fn main() {
+    // Wait for our sysfs to be read
+    while std::fs::metadata(driver_sysfs::DRIVER_DIR).is_err() {
+        println!("Waiting for sysfs to be ready");
+        thread::sleep(time::Duration::from_millis(1000));
+    }
+
+
     // Start the keyboard animator thread,
     // This thread also periodically checks the machine power
     std::thread::spawn(move || {

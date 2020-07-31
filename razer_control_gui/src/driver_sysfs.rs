@@ -3,7 +3,7 @@ use lazy_static::lazy_static;
 use std::fs;
 
 // Driver path
-const DRIVER_DIR: &'static str =
+pub const DRIVER_DIR: &'static str =
     "/sys/module/razercontrol/drivers/hid:Razer laptop System control driver";
 
 lazy_static! {

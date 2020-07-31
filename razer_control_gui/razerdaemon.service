@@ -6,4 +6,4 @@ Type=simple
 ExecStart=/usr/share/razercontrol/daemon
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target
