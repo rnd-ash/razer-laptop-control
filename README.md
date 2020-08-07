@@ -17,7 +17,6 @@ On all razer notebooks, the following is supported:
 * Power control
 
 ### RGB control
-**RGB control is currently experimental, and can only be done using the CLI application**
 Currently, there are various build in effects to choose from, and multiple 'effect layers' can be stacked on top of eachother, allowing for each key to be controlled with its own effect!
 ### Fan control
 Control the notebooks fan RPM just like in Synapse! - Currently supports switching between Automatic and manual (Up to 5300 RPM)
@@ -33,9 +32,6 @@ Kernel module required for the software to work
 
 ### razer_control_gui
 Experimental code for system daemon and UI/CLI interface for controlling both RGB aspects and fan+Power subsystem of razer notebooks
-
-## rgb_test_service
-**Deprecated - Please use razer_control_gui**
 
 ## Changelog
 
