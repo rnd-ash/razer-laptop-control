@@ -10,6 +10,15 @@ I can be contacted on this discord server under the 'laptop-control' channel
 ## Project demo videos:
 [Playlist of all demos can be viewed here](https://www.youtube.com/playlist?list=PLxrw-4Vt7xtsO21RxaDwd7GJlKs3YU-g4)
 
+## Install
+### Arch linux
+Use the 2 PKGBUILDS located here:
+* [DKMS Driver](https://aur.archlinux.org/packages/razer-laptop-control-dkms-git/)
+* [CLI and Daemon](https://aur.archlinux.org/packages/razer-laptop-control-git/)
+
+### Other distros
+Unfortunatly, you have to build from scrath.
+
 ## What does this control
 On all razer notebooks, the following is supported:
 * RGB keyboard control (Experimental)
