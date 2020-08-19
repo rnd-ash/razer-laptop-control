@@ -32,7 +32,7 @@ fn main() {
         println!("Waiting for sysfs to be ready");
         thread::sleep(time::Duration::from_millis(1000));
     }
-
+    println!("Sysfs ready! Starting daemon");
 
     // Start the keyboard animator thread,
     // This thread also periodically checks the machine power
