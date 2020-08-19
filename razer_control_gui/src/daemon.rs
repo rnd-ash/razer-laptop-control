@@ -27,10 +27,16 @@ fn push_effect(effect: Box<dyn Effect>, mask: [bool; 90]) {
 
 // Main function for daemon
 fn main() {
-    // Wait for our sysfs to be read
+    let mut tries = 0;
+    // Wait for our sysfs to be read - try for 30 seconds
     while std::fs::metadata(driver_sysfs::DRIVER_DIR).is_err() {
         println!("Waiting for sysfs to be ready");
         thread::sleep(time::Duration::from_millis(1000));
+        tries += 1;
+        if tries == 30 {
+            eprintln!("Timed out waiting for sysfs after a minute!");
+            std::process::exit(1);
+        }
     }
     println!("Sysfs ready! Starting daemon");
 
