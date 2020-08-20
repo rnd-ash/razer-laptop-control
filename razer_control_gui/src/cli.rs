@@ -10,7 +10,7 @@ fn print_help(reason: &str) -> ! {
     println!("Help:");
     println!("./razer-cli read <attr>");
     println!("./razer-cli write <attr>");
-    println!("./razer-cli write colour red green blue");
+    println!("./razer-cli write effect <effect name> <params>");
     println!("");
     println!("Where 'attr':");
     println!("- fan -> Cooling fan RPM. 0 is automatic");
@@ -19,6 +19,11 @@ fn print_help(reason: &str) -> ! {
     println!("              1 = Gaming");
     println!("              2 = Balanced");
     println!("");
+    println!("- effect:");
+    println!("  -> 'static' - PARAMS: <Red> <Green> <Blue>");
+    println!("  -> 'static_gradient' - PARAMS: <Red1> <Green1> <Blue1> <Red2> <Green2> <Blue2>");
+    println!("  -> 'wave_gradient' - PARAMS: <Red1> <Green1> <Blue1> <Red2> <Green2> <Blue2>");
+    println!("  -> 'breathing_single' - PARAMS: <Red> <Green> <Blue> <Duration_ms/100>");
     std::process::exit(ret_code);
 }
 
@@ -28,7 +33,7 @@ fn main() {
         eprintln!("Error. Socket doesn't exit. Is daemon running?");
         std::process::exit(1);
     }
-    let args : Vec<_> = env::args().collect();
+    let mut args : Vec<_> = env::args().collect();
     if args.len() < 3 {
         print_help("Not enough args supplied");
     }
@@ -41,18 +46,10 @@ fn main() {
             }
         },
         "write" => {
-            // Special case for setting kbd colour
-            if args[2].to_ascii_lowercase().as_str() == "colour" {
-                if args.len() != 6 {
-                    print_help("Invalid number of args. Colour requires 3 params for r,g,b");
-                }
-                let r = args[3].parse::<u8>();
-                let g = args[4].parse::<u8>();
-                let b = args[5].parse::<u8>();
-                if r.is_err() || g.is_err() || b.is_err() {
-                    print_help("Invalid number detected. r,g,b must be between 0 and 255!")
-                }
-                write_colour(r.unwrap(), g.unwrap(), b.unwrap());
+            // Special case for setting effect - lots of params
+            if args[2].to_ascii_lowercase().as_str() == "effect" {
+                args.drain(0..3);
+                write_effect(args);
                 return;
             }
             if args.len() != 4 {
@@ -69,6 +66,54 @@ fn main() {
             }
         },
         _ => print_help(format!("Unrecognised argument: `{}`", args[1]).as_str())
+    }
+}
+
+fn write_effect(opt: Vec<String>) {
+    println!("Write effect: Args: {:?}", opt);
+    let name = opt[0].clone();
+    let mut params : Vec<u8> = vec![];
+    for i in 1..opt.len() {
+        if let Ok(x) = opt[i].parse::<u8>() {
+            params.push(x)
+        } else {
+            print_help(format!("Option for effect is not valid (Must be 0-255): `{}`", opt[i]).as_str())
+        }
+    }
+    println!("Params: {:?}", params);
+    match name.to_ascii_lowercase().as_str() {
+        "static" => {
+            if params.len() != 3 { print_help("Static effect requires 3 args") }
+            send_effect(name.to_ascii_lowercase(), params)
+        }
+        "static_gradient" => {
+            if params.len() != 6 { print_help("Static gradient requires 6 args") }
+            params.push(0); // Until implimented direction
+            send_effect(name.to_ascii_lowercase(), params)
+        }
+        "wave_gradient" => {
+            if params.len() != 6 { print_help("Wave gradient requires 6 args") }
+            params.push(0); // Until implimented direction
+            send_effect(name.to_ascii_lowercase(), params)
+        }
+        "breathing_single" => {
+            if params.len() != 4 { print_help("Breathing single requires 4 args") }
+            send_effect(name.to_ascii_lowercase(), params)
+        }
+        _ => print_help(format!("Unrecognised effect name: `{}`", name).as_str())
+    }
+}
+
+fn send_effect(name: String, params: Vec<u8>) {
+    if let Some(r) = send_data(comms::DaemonCommand::SetEffect { name, params }) {
+        if let comms::DaemonResponse::SetEffect { result } = r {
+            match result {
+                true => println!("Effect set OK!"),
+                _ => eprintln!("Effect set FAIL!")
+            }
+        }
+    } else {
+        eprintln!("Unknown daemon error!");
     }
 }
 
@@ -132,6 +177,7 @@ fn write_fan_speed(x: i32) {
     }
 }
 
+/*
 fn write_colour(r: u8, g: u8, b: u8) {
     if let Some(_) = send_data(comms::DaemonCommand::SetColour { r, g, b }) {
         read_fan_rpm()
@@ -139,3 +185,4 @@ fn write_colour(r: u8, g: u8, b: u8) {
         eprintln!("Unknown error!");
     }
 }
+*/

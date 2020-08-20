@@ -152,19 +152,30 @@ pub fn process_client_request(cmd: comms::DaemonCommand) -> Option<comms::Daemon
         }
         comms::DaemonCommand::GetFanSpeed() => Some(comms::DaemonResponse::GetFanSpeed { rpm: driver_sysfs::read_fan_rpm() }),
         comms::DaemonCommand::GetPwrLevel() => Some(comms::DaemonResponse::GetPwrLevel { pwr: driver_sysfs::read_power() }),
-        comms::DaemonCommand::SetColour{r, g, b} => {
+        comms::DaemonCommand::SetEffect{ name, params } => {
             let mut res = false;
             if let Ok(mut k) = EFFECT_MANAGER.lock() {
                 res = true;
-                k.pop_effect(); // Remove old layer
-                k.push_effect(
-                    kbd::effects::Static::new(vec![r, g, b]), 
-                    [true; 90]
-                );
-            }
-            Some(comms::DaemonResponse::SetColour{result: res})
-        }
+                let effect = match name.as_str() {
+                    "static" => Some(kbd::effects::Static::new(params)),
+                    "static_gradient" => Some(kbd::effects::StaticGradient::new(params)),
+                    "wave_gradient" => Some(kbd::effects::WaveGradient::new(params)),
+                    "breathing_single" => Some(kbd::effects::BreathSingle::new(params)),
+                    _ => None
+                };
 
+                if let Some(e) = effect {
+                    k.pop_effect(); // Remove old layer
+                    k.push_effect(
+                        e,
+                        [true; 90]
+                    );
+                } else {
+                    res = false
+                }
+            }
+            Some(comms::DaemonResponse::SetEffect{result: res})
+        }
 
         _ => {
             eprintln!("Error. Unrecognised request!");

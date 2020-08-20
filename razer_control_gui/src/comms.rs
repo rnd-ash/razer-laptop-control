@@ -14,7 +14,7 @@ pub enum DaemonCommand {
     GetPwrLevel(),                 // Get (Power mode)
     GetKeyboardRGB { layer: i32 }, // Layer ID
     GetCfg(),                      // Request curr settings for fan + power
-    SetColour { r: u8, g: u8, b: u8} // Set keyboard colour
+    SetEffect { name: String, params: Vec<u8> } // Set keyboard colour
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -27,7 +27,7 @@ pub enum DaemonResponse {
     GetPwrLevel { pwr: u8 },                         // Get (Power mode)
     GetKeyboardRGB { layer: i32, rgbdata: Vec<u8> }, // Response (RGB) of 90 keys
     GetCfg { fan_rpm: i32, pwr: u8 },                // Fan speed, power mode
-    SetColour { result: bool }                       // Set keyboard colour
+    SetEffect { result: bool }                       // Set keyboard colour
 }
 
 pub fn bind() -> Option<UnixStream> {
