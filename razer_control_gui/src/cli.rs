@@ -15,9 +15,9 @@ fn print_help(reason: &str) -> ! {
     println!("Where 'attr':");
     println!("- fan -> Cooling fan RPM. 0 is automatic");
     println!("- power   -> Power mode.");
-    println!("              0 = Normal");
+    println!("              0 = Balanced (Normal)");
     println!("              1 = Gaming");
-    println!("              2 = Balanced");
+    println!("              2 = Creator");
     println!("");
     println!("- effect:");
     println!("  -> 'static' - PARAMS: <Red> <Green> <Blue>");
