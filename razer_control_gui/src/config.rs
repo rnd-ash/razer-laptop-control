@@ -10,6 +10,8 @@ const EFFECTS_FILE: &str = "/usr/share/razercontrol/effects.json";
 #[derive(Serialize, Deserialize)]
 pub struct Configuration {
     pub power_mode: u8,
+    pub cpu_boost: u8,
+    pub gpu_boost: u8,
     pub fan_rpm: i32,
     pub brightness: u8,
 }
@@ -18,6 +20,8 @@ impl Configuration {
     pub fn new() -> Configuration {
         return Configuration {
             power_mode: 0,
+            cpu_boost: 0,
+            gpu_boost: 0,
             fan_rpm: 0,
             brightness: 128,
         };

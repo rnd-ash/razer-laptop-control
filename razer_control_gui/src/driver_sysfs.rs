@@ -74,8 +74,8 @@ pub fn read_brightness() -> u8 {
 }
 
 // Power mode is read + write
-pub fn write_power(mode: u8) -> bool {
-    return write_to_sysfs("power_mode", String::from(format!("{}", mode)));
+pub fn write_power(mode: u8, cpu_boost: u8, gpu_boost: u8) -> bool {
+    return write_to_sysfs("power_mode", String::from(format!("{} {} {}", mode, cpu_boost, gpu_boost)));
 }
 
 pub fn read_power() -> u8 {

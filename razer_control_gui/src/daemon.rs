@@ -63,7 +63,7 @@ fn main() {
     if let Ok(c) = CONFIG.lock() {
         driver_sysfs::write_brightness(c.brightness);
         driver_sysfs::write_fan_rpm(c.fan_rpm);
-        driver_sysfs::write_power(c.power_mode);
+        driver_sysfs::write_power(c.power_mode, c.cpu_boost, c.gpu_boost);
         if let Ok(json) = config::Configuration::read_effects_file() {
             EFFECT_MANAGER.lock().unwrap().load_from_save(json);
         } else {
@@ -129,12 +129,14 @@ pub fn process_client_request(cmd: comms::DaemonCommand) -> Option<comms::Daemon
             let pwr = CONFIG.lock().unwrap().power_mode;
             Some(comms::DaemonResponse::GetCfg { fan_rpm, pwr })
         }
-        comms::DaemonCommand::SetPowerMode { pwr } => {
+        comms::DaemonCommand::SetPowerMode { pwr, cpu, gpu } => {
             if let  Ok(mut x) = CONFIG.lock() {
                 x.power_mode = pwr;
+                x.cpu_boost = cpu;
+                x.gpu_boost = gpu;
                 x.write_to_file().unwrap();
             }
-            Some(comms::DaemonResponse::SetPowerMode { result: driver_sysfs::write_power(pwr) })
+            Some(comms::DaemonResponse::SetPowerMode { result: driver_sysfs::write_power(pwr, cpu, gpu) })
         },
         comms::DaemonCommand::SetFanSpeed { rpm } => {
             if let  Ok(mut x) = CONFIG.lock() {
