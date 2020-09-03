@@ -22,14 +22,14 @@ static razer_laptop laptop = {0x00};
 /**
  * Function to send RGB data to keyboard to display
  * The keyboard is designed as a matrix with 6 rows (below is outline of my UK keyboard):
- * 
- *  Row 0: ESC - DEL 
+ *
+ *  Row 0: ESC - DEL
  * 	Row 1: ` - BACKSPACE
  *  Row 2: TAB - ENTER
  *  Row 3: CAPS - #
  *  Row 4: SHIFT - SHIFT
  *  Row 5: CTRL - FN
- * 
+ *
  * This function takes RGB data and sends it to each row in the keyboard.
  * We expect 360 bytes (4 bytes per key), send in order row 0, key 0 to row 5, key 14.
  */
@@ -105,7 +105,51 @@ static ssize_t power_mode_store(struct device *dev, struct device_attribute *att
 		#endif
 		return -EINVAL;
 	}
-	set_power_mode(x, &laptop);
+
+    set_power_mode(x, &laptop);
+    set_custom_power_mode(laptop.cpu_boost, laptop.gpu_boost, &laptop);
+
+	return count;
+}
+
+static ssize_t cpu_boost_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%d\n", laptop.cpu_boost);
+}
+
+
+static ssize_t cpu_boost_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
+{
+	unsigned long x;
+	if (kstrtol(buf, 10, &x)) {
+		#ifdef DEBUG
+		dev_warn(dev, "User entered an invalid input for power mode. Defaulting to balanced");
+		#endif
+		return -EINVAL;
+	}
+
+    set_custom_power_mode(x, laptop.gpu_boost, &laptop);
+
+	return count;
+}
+
+static ssize_t gpu_boost_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%d\n", laptop.gpu_boost);
+}
+
+
+static ssize_t gpu_boost_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
+{
+	unsigned long x;
+	if (kstrtol(buf, 10, &x)) {
+		#ifdef DEBUG
+		dev_warn(dev, "User entered an invalid input for power mode. Defaulting to balanced");
+		#endif
+		return -EINVAL;
+	}
+
+    set_custom_power_mode(laptop.cpu_boost, x, &laptop);
 
 	return count;
 }
@@ -113,6 +157,8 @@ static ssize_t power_mode_store(struct device *dev, struct device_attribute *att
 // Set our device attributes in sysfs
 static DEVICE_ATTR_RW(fan_rpm);
 static DEVICE_ATTR_RW(power_mode);
+static DEVICE_ATTR_RW(cpu_boost);
+static DEVICE_ATTR_RW(gpu_boost);
 static DEVICE_ATTR_WO(key_colour_map);
 static DEVICE_ATTR_RO(product);
 
@@ -152,6 +198,8 @@ static int razer_laptop_probe(struct hid_device *hdev, const struct hid_device_i
     // When the driver first loads (At boot), we know these will be the default values:
     laptop.fan_rpm = 0; // Auto
     laptop.power_mode = 0; // Normal
+    laptop.cpu_boost = 1; // equal to Normal
+    laptop.gpu_boost = 1; // equal to Normal
     laptop.product_id = hdev->product; // Product id
     laptop.usb_dev = usb_dev;
 
@@ -162,6 +210,8 @@ static int razer_laptop_probe(struct hid_device *hdev, const struct hid_device_i
     // Create SYSFS entries
     device_create_file(&hdev->dev, &dev_attr_fan_rpm);
     device_create_file(&hdev->dev, &dev_attr_power_mode);
+    device_create_file(&hdev->dev, &dev_attr_cpu_boost);
+    device_create_file(&hdev->dev, &dev_attr_gpu_boost);
     device_create_file(&hdev->dev, &dev_attr_key_colour_map);
     device_create_file(&hdev->dev, &dev_attr_product);
 
