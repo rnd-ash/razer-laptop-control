@@ -156,6 +156,7 @@ fn read_power_mode() {
                 0 => "Balanced",
                 1 => "Gaming",
                 2 => "Creator",
+                4 => "Custom",
                 _ => "Unknown"
             };
             println!("Current power setting: {}", power_desc);

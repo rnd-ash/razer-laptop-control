@@ -74,8 +74,18 @@ pub fn read_brightness() -> u8 {
 }
 
 // Power mode is read + write
-pub fn write_power(mode: u8, cpu_boost: u8, gpu_boost: u8) -> bool {
-    return write_to_sysfs("power_mode", String::from(format!("{} {} {}", mode, cpu_boost, gpu_boost)));
+pub fn write_power(mode: u8) -> bool {
+    return write_to_sysfs("power_mode", String::from(format!("{}", mode)));
+}
+
+// cpu_boost read + write
+pub fn write_cpu_boost(cpu_boost: u8) -> bool {
+    return write_to_sysfs("cpu_boost", String::from(format!("{}", cpu_boost)));
+}
+
+//gpu_boost is read + write
+pub fn write_gpu_boost(gpu_boost: u8) -> bool {
+    return write_to_sysfs("gpu_boost", String::from(format!("{}", gpu_boost)));
 }
 
 pub fn read_power() -> u8 {
@@ -85,6 +95,19 @@ pub fn read_power() -> u8 {
     };
 }
 
+pub fn read_cpu_boost() -> u8 {
+    return match read_from_sysfs("cpu_boost") {
+        Some(x) => x.parse::<u8>().unwrap(),
+        None => 0,
+    };
+}
+
+pub fn read_gpu_boost() -> u8 {
+    return match read_from_sysfs("gpu_boost") {
+        Some(x) => x.parse::<u8>().unwrap(),
+        None => 0,
+    };
+}
 /// Writes fan RPM to sysfs, and returns result of the write
 /// # Arguments
 /// * `rpm` - Fan RPM to write to sysfs. 0 imples back to automatic fan
