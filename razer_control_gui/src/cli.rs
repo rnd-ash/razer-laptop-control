@@ -18,6 +18,9 @@ fn print_help(reason: &str) -> ! {
     println!("              0 = Balanced (Normal)");
     println!("              1 = Gaming");
     println!("              2 = Creator");
+    println!("              4 = Custom ->");
+    println!("                          0..3 = cpu boost");
+    println!("                          0..1 = gpu boost");
     println!("");
     println!("- effect:");
     println!("  -> 'static' - PARAMS: <Red> <Green> <Blue>");
@@ -52,13 +55,17 @@ fn main() {
                 write_effect(args);
                 return;
             }
+            if args[2].to_ascii_lowercase().as_str() == "power" {
+                args.drain(0..3);
+                write_pwr_mode(args);
+                return;
+            }
             if args.len() != 4 {
                 print_help("Invalid number of args supplied");
             }
             if let Ok(processed) = args[3].parse::<i32>() {
                 match args[2].to_ascii_lowercase().as_str() {
                     "fan" => write_fan_speed(processed),
-                    "power" => write_pwr_mode(processed),
                     _ => print_help(format!("Unrecognised option to read: `{}`", args[2]).as_str())
                 }
             } else {
@@ -149,24 +156,91 @@ fn read_power_mode() {
                 0 => "Balanced",
                 1 => "Gaming",
                 2 => "Creator",
+                4 => "Custom",
                 _ => "Unknown"
             };
             println!("Current power setting: {}", power_desc);
+            if pwr == 4 {
+                if let Some(resp) = send_data(comms::DaemonCommand::GetCPUBoost()) {
+                    if let comms::DaemonResponse::GetCPUBoost {cpu } = resp {
+                        let cpu_boost_desc : &str = match cpu {
+                            0 => "Low",
+                            1 => "Medium",
+                            2 => "High",
+                            3 => "Boost",
+                            _ => "Unknown"
+                        };
+                        println!("Current CPU setting: {}", cpu_boost_desc);
+                    };
+                }
+                if let Some(resp) = send_data(comms::DaemonCommand::GetGPUBoost()) {
+                    if let comms::DaemonResponse::GetGPUBoost {gpu } = resp {
+                        let gpu_boost_desc : &str = match gpu {
+                            0 => "Low",
+                            1 => "Medium",
+                            2 => "High",
+                            _ => "Unknown"
+                        };
+                        println!("Current GPU setting: {}", gpu_boost_desc);
+                    };
+                }
+            }
         } else {
             eprintln!("Daemon responded with invalid data!");
         }
     }
 }
 
-fn write_pwr_mode(x: i32) {
-    if !(x >= 0 && x <= 2) {
-        print_help("Power mode must be 0, 1 or 2");
-    }
-    if let Some(_) = send_data(comms::DaemonCommand::SetPowerMode { pwr: x as u8 }) {
-        read_power_mode()
+fn write_pwr_mode(opt: Vec<String>) {
+    println!("Write effect: Args: {:?}", opt);
+    if let Ok(x) = opt[0].parse::<i8>() {
+        if (x >= 0 && x <= 2) || (x == 4) {
+            if x == 4
+            {
+                if opt.len() != 3 {
+                    print_help("Invalid number of args supplied");
+                }
+                else {
+                    if let Ok(cpu_boost) = opt[1].parse::<i8>() {
+                        if cpu_boost >= 0 && cpu_boost <= 3 {
+                            if let Ok(gpu_boost) = opt[2].parse::<i8>() {
+                                if gpu_boost >= 0 && gpu_boost <= 2 {
+                                    if let Some(_) = send_data(comms::DaemonCommand::SetPowerMode { pwr: x as u8, cpu: cpu_boost as u8, gpu: gpu_boost as u8}) {
+                                        read_power_mode()
+                                    } else {
+                                        eprintln!("Unknown error!");
+                                    }
+                                }
+                                else
+                                {
+                                    print_help("CPU boost must be between 0 and 2");
+                                }
+                            }
+                        }
+                        else
+                        {
+                            print_help("CPU boost must be between 0 and 3");
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if let Some(_) = send_data(comms::DaemonCommand::SetPowerMode { pwr: x as u8, cpu: 0, gpu: 0}) {
+                    read_power_mode()
+                } else {
+                    eprintln!("Unknown error!");
+                }
+            }
+        }
+        else
+        {
+            print_help("Power mode must be 0, 1, 2 or 4");
+        }
     } else {
         eprintln!("Unknown error!");
     }
+    
 }
 
 fn write_fan_speed(x: i32) {

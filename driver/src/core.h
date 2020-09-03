@@ -36,7 +36,9 @@ typedef struct razer_laptop {
     struct mutex lock; // Lock mutex
     struct usb_device *usb_dev;	// USB Device for communication
     __u16 fan_rpm; // Fan RPM Set by driver (0 if it is auto!)
-    __u8 power_mode; // Power mode (0 = normal, 1 = gaming, 2 = creator)
+    __u8 power_mode; // Power mode (0 = normal, 1 = gaming, 2 = creator, 4 = custom)
+    __u8 cpu_boost; // only for custom mode
+    __u8 gpu_boost; // only for custom mode
     keyboard_info kbd; // Keyboard data
 } razer_laptop;
 
