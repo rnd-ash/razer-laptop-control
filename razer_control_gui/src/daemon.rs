@@ -165,6 +165,8 @@ pub fn process_client_request(cmd: comms::DaemonCommand) -> Option<comms::Daemon
         }
         comms::DaemonCommand::GetFanSpeed() => Some(comms::DaemonResponse::GetFanSpeed { rpm: driver_sysfs::read_fan_rpm() }),
         comms::DaemonCommand::GetPwrLevel() => Some(comms::DaemonResponse::GetPwrLevel { pwr: driver_sysfs::read_power() }),
+        comms::DaemonCommand::GetCPUBoost() => Some(comms::DaemonResponse::GetCPUBoost { cpu: driver_sysfs::read_cpu_boost() }),
+        comms::DaemonCommand::GetGPUBoost() => Some(comms::DaemonResponse::GetGPUBoost { gpu: driver_sysfs::read_gpu_boost() }),
         comms::DaemonCommand::SetEffect{ name, params } => {
             let mut res = false;
             if let Ok(mut k) = EFFECT_MANAGER.lock() {

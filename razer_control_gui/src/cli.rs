@@ -160,6 +160,31 @@ fn read_power_mode() {
                 _ => "Unknown"
             };
             println!("Current power setting: {}", power_desc);
+            if pwr == 4 {
+                if let Some(resp) = send_data(comms::DaemonCommand::GetCPUBoost()) {
+                    if let comms::DaemonResponse::GetCPUBoost {cpu } = resp {
+                        let cpu_boost_desc : &str = match cpu {
+                            0 => "Low",
+                            1 => "Medium",
+                            2 => "High",
+                            3 => "Boost",
+                            _ => "Unknown"
+                        };
+                        println!("Current CPU setting: {}", cpu_boost_desc);
+                    };
+                }
+                if let Some(resp) = send_data(comms::DaemonCommand::GetGPUBoost()) {
+                    if let comms::DaemonResponse::GetGPUBoost {gpu } = resp {
+                        let gpu_boost_desc : &str = match gpu {
+                            0 => "Low",
+                            1 => "Medium",
+                            2 => "High",
+                            _ => "Unknown"
+                        };
+                        println!("Current GPU setting: {}", gpu_boost_desc);
+                    };
+                }
+            }
         } else {
             eprintln!("Daemon responded with invalid data!");
         }

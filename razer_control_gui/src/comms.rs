@@ -12,6 +12,8 @@ pub enum DaemonCommand {
     GetFanSpeed(),                 // Get (Fan speed)
     SetPowerMode { pwr: u8, cpu: u8, gpu: u8},      // Power mode
     GetPwrLevel(),                 // Get (Power mode)
+    GetCPUBoost(),                 // Get (CPU boost)
+    GetGPUBoost(),                 // Get (GPU boost)
     GetKeyboardRGB { layer: i32 }, // Layer ID
     GetCfg(),                      // Request curr settings for fan + power
     SetEffect { name: String, params: Vec<u8> } // Set keyboard colour
@@ -25,6 +27,8 @@ pub enum DaemonResponse {
     GetFanSpeed { rpm: i32 },                        // Get (Fan speed)
     SetPowerMode { result: bool },                   // Response
     GetPwrLevel { pwr: u8 },                         // Get (Power mode)
+    GetCPUBoost { cpu: u8 },                         // Get (CPU boost)
+    GetGPUBoost { gpu: u8 },                         // Get (GPU boost)
     GetKeyboardRGB { layer: i32, rgbdata: Vec<u8> }, // Response (RGB) of 90 keys
     GetCfg { fan_rpm: i32, pwr: u8 },                // Fan speed, power mode
     SetEffect { result: bool }                       // Set keyboard colour
