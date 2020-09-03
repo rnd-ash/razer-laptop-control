@@ -43,6 +43,7 @@ int creator_mode_allowed(__u32 product_id)
 	switch (product_id) {
 	case BLADE_2019_ADV:
 	case BLADE_2019_MERC:
+    case BLADE_2020_ADV:
 		return 1;
 	default:
 		return 0;
