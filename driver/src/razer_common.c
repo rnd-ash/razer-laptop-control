@@ -243,6 +243,8 @@ static void razer_laptop_remove(struct hid_device *hdev) {
 
     device_remove_file(&hdev->dev, &dev_attr_fan_rpm);
     device_remove_file(&hdev->dev, &dev_attr_power_mode);
+    device_remove_file(&hdev->dev, &dev_attr_cpu_boost);
+    device_remove_file(&hdev->dev, &dev_attr_gpu_boost);
     device_remove_file(&hdev->dev, &dev_attr_key_colour_map);
     device_remove_file(&hdev->dev, &dev_attr_product);
     if (loaded) { // Ensure this only happens once!
