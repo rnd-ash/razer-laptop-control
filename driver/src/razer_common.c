@@ -13,7 +13,7 @@
 MODULE_AUTHOR("Ashcon Mohseninia");
 MODULE_DESCRIPTION("Razer system control driver for laptops");
 MODULE_LICENSE("GPL");
-MODULE_VERSION("1.2.2");
+MODULE_VERSION("1.3.0");
 
 static int loaded = 0;
 static razer_laptop laptop = {0x00};
