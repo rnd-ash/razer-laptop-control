@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 #include "fancontrol.h"
+#include "core.h"
 
 /*
  * Returns the highest valid fan RPM for manual fan control
@@ -26,7 +27,7 @@ static int get_max_fan_rpm(__u32 product_id)
 	}
 }
 
-u8 clamp_fan_rpm(unsigned int rpm, __u32 product_id)
+static u8 clamp_fan_rpm(unsigned int rpm, __u32 product_id)
 {
 	int max_allowed = get_max_fan_rpm(product_id);
 
@@ -38,7 +39,7 @@ u8 clamp_fan_rpm(unsigned int rpm, __u32 product_id)
 	return (u8)(rpm / 100);
 }
 
-int creator_mode_allowed(__u32 product_id)
+static int creator_mode_allowed(__u32 product_id)
 {
 	switch (product_id) {
 	case BLADE_2019_ADV:
@@ -50,7 +51,7 @@ int creator_mode_allowed(__u32 product_id)
 	}
 }
 
-int boost_mode_allowed(__u32 product_id)
+static int boost_mode_allowed(__u32 product_id)
 {
     switch (product_id) {
     case BLADE_2020_ADV:
@@ -65,11 +66,14 @@ void set_fan_rpm(unsigned long x, struct razer_laptop *laptop) {
     if(laptop->power_mode < 4) // custom mode do not support fan profile
     {
         u8 request_fan_speed;
-        char buffer[90] = {0x00};
+        struct razer_packet report = {0};
+        /* char buffer[90] = {0x00}; */
         if (x != 0) {
             request_fan_speed = clamp_fan_rpm(x, laptop->product_id);
             laptop->fan_rpm = request_fan_speed * 100;
             // All packets
+            report = get_razer_report(0x0d, 0x82, 0x04);
+#if 0
             buffer[0] = 0x00;
             buffer[1] = 0x1f;
             buffer[2] = 0x00;
@@ -84,8 +88,16 @@ void set_fan_rpm(unsigned long x, struct razer_laptop *laptop) {
             buffer[9] = 0x01;
             buffer[10] = 0x00;
             buffer[11] = 0x00;
-            send_payload(laptop->usb_dev, buffer, 3400, 3800);
+#endif
+            // get current power mode
+            report.args[0] = 0x00;
+            report.args[1] = 0x01;
+            report.args[2] = 0x00;
+            report.args[3] = 0x00;
+            send_payload(laptop->usb_dev, &report);
 
+            report = get_razer_report(0x0d, 0x02, 0x04);
+#if 0
             // Unknown
             buffer[5] = 0x04;
             buffer[6] = 0x0d;
@@ -94,8 +106,17 @@ void set_fan_rpm(unsigned long x, struct razer_laptop *laptop) {
             buffer[9] = 0x01;
             buffer[10] = laptop->power_mode;
             buffer[11] = laptop->fan_rpm != 0 ? 0x01 : 0x00;
-            send_payload(laptop->usb_dev, buffer, 204000, 205000);
 
+#endif
+            // set current power mode with custom rpm
+            report.args[0] = 0x00;
+            report.args[1] = 0x01;
+            report.args[2] = laptop->power_mode;
+            report.args[3] = laptop->fan_rpm != 0 ? 0x01 : 0x00;
+            send_payload(laptop->usb_dev, &report);
+
+            report = get_razer_report(0x0d, 0x01, 0x03);
+#if 0
             // Set fan RPM
             buffer[5] = 0x03;
             buffer[6] = 0x0d;
@@ -104,8 +125,14 @@ void set_fan_rpm(unsigned long x, struct razer_laptop *laptop) {
             buffer[9] = 0x01;
             buffer[10] = request_fan_speed;
             buffer[11] = 0x00;
-            send_payload(laptop->usb_dev, buffer, 3400, 3800);
+#endif
+            report.args[0] = 0x00;
+            report.args[1] = 0x01;
+            report.args[2] = request_fan_speed;
+            send_payload(laptop->usb_dev, &report);
 
+            report = get_razer_report(0x0d, 0x82, 0x04);
+#if 0
             // Unknown
             buffer[5] = 0x04;
             buffer[6] = 0x0d;
@@ -114,11 +141,18 @@ void set_fan_rpm(unsigned long x, struct razer_laptop *laptop) {
             buffer[9] = 0x02;
             buffer[10] = 0x00;
             buffer[11] = 0x00;
-            send_payload(laptop->usb_dev, buffer, 3400, 3800);
+#endif
+            report.args[0] = 0x00;
+            report.args[1] = 0x02;
+            report.args[2] = 0x00;
+            report.args[3] = 0x00;
+            send_payload(laptop->usb_dev, &report);
         } else {
             laptop->fan_rpm = 0;
         }
         // Fan mode
+        report = get_razer_report(0x0d, 0x82, 0x04);
+#if 0
         buffer[5] = 0x04;
         buffer[6] = 0x0d;
         buffer[7] = 0x02;
@@ -126,10 +160,17 @@ void set_fan_rpm(unsigned long x, struct razer_laptop *laptop) {
         buffer[9] = 0x02;
         buffer[10] = laptop->power_mode;
         buffer[11] = laptop->fan_rpm != 0 ? 0x01 : 0x00;
-        send_payload(laptop->usb_dev, buffer, 204000, 205000);
+#endif
+        report.args[0] = 0x00;
+        report.args[1] = 0x02;
+        report.args[2] = laptop->power_mode;
+        report.args[3] = laptop->fan_rpm != 0 ? 0x01 : 0x00;
+        send_payload(laptop->usb_dev, &report);
 
         if (x != 0) {
             // Set fan RPM
+            report = get_razer_report(0x0d, 0x01, 0x03);
+#if 0
             buffer[5] = 0x03;
             buffer[6] = 0x0d;
             buffer[7] = 0x01;
@@ -137,7 +178,11 @@ void set_fan_rpm(unsigned long x, struct razer_laptop *laptop) {
             buffer[9] = 0x02;
             buffer[10] = request_fan_speed;
             buffer[11] = 0x00;
-            send_payload(laptop->usb_dev, buffer, 0, 0);
+#endif
+            report.args[0] = 0x00;
+            report.args[1] = 0x02;
+            report.args[2] = request_fan_speed;
+            send_payload(laptop->usb_dev, &report);
         }
     }
     mutex_unlock(&laptop->lock);
@@ -145,31 +190,20 @@ void set_fan_rpm(unsigned long x, struct razer_laptop *laptop) {
 
 int set_power_mode(unsigned long x, struct razer_laptop *laptop) {
     mutex_lock(&laptop->lock);
-    int res = 0;
     if (x >= 0 && x <= 2) {
-        char buffer[90];
+        struct razer_packet report = {0};
         // Device doesn't support creator mode
         if (x == 2 && !creator_mode_allowed(laptop->product_id)) {
             x = 1;
         }
 
         laptop->power_mode = x;
-        memset(buffer, 0x00, sizeof(buffer));
-        // All packets
-        buffer[0] = 0x00;
-        buffer[1] = 0x1f;
-        buffer[2] = 0x00;
-        buffer[3] = 0x00;
-        buffer[4] = 0x00;
-
-        buffer[5] = 0x04;
-        buffer[6] = 0x0d;
-        buffer[7] = 0x02;
-        buffer[8] = 0x00;
-        buffer[9] = 0x01;
-        buffer[10] = laptop->power_mode;
-        buffer[11] = laptop->fan_rpm != 0 ? 0x01 : 0x00; // Custom RPM?
-        res = send_payload(laptop->usb_dev, buffer, 0, 0);
+        report = get_razer_report(0x0d, 0x02, 0x04);
+        report.args[0] = 0x00;
+        report.args[1] = 0x01;
+        report.args[2] = laptop->power_mode;
+        report.args[3] = laptop->fan_rpm != 0 ? 0x01 : 0x00; // Custom RPM ?
+        send_payload(laptop->usb_dev, &report);
     }
     else if(x == 4)
     {
@@ -177,7 +211,7 @@ int set_power_mode(unsigned long x, struct razer_laptop *laptop) {
     }
     mutex_unlock(&laptop->lock);
 
-    return res;
+    return 0;
 }
 
 int set_custom_power_mode(unsigned long cpu_boost, unsigned long gpu_boost, struct razer_laptop *laptop)
@@ -185,102 +219,75 @@ int set_custom_power_mode(unsigned long cpu_boost, unsigned long gpu_boost, stru
     mutex_lock(&laptop->lock);
     if(laptop->power_mode == 4)
     {
-        char buffer[90];
+        struct razer_packet report = {0};
         if(cpu_boost == 3 && !boost_mode_allowed(laptop->product_id))
         {
             cpu_boost = 2;
         }
 
+        // TODO read power mode if already set directly set cpu and gpu boost
         laptop->cpu_boost = cpu_boost;
         laptop->gpu_boost = gpu_boost;
-        memset(buffer, 0x00, sizeof(buffer));
+        // read power mode
+        report = get_razer_report(0x0d, 0x82, 0x04);
+        report.args[0] = 0x00;
+        report.args[1] = 0x01;
+        report.args[2] = 0x00;
+        report.args[3] = 0x00;
+        send_payload(laptop->usb_dev, &report);
 
-        // All packets
-        buffer[0] = 0x00;
-        buffer[1] = 0x1f;
-        buffer[2] = 0x00;
-        buffer[3] = 0x00;
-        buffer[4] = 0x00;
+        report = get_razer_report(0x0d, 0x02, 0x04);
 
-        // Begin transaction
-        buffer[5] = 0x04;
-        buffer[6] = 0x0d;
-        buffer[7] = 0x82;
-        buffer[8] = 0x00;
-        buffer[9] = 0x01;
-        buffer[10] = 0x00;
-        buffer[11] = 0x00;
-        send_payload(laptop->usb_dev, buffer, 3400, 3800);
+        // set power mode
+        report.args[0] = 0x00;
+        report.args[1] = 0x01;
+        report.args[2] = laptop->power_mode;
+        report.args[3] = 0x00;
+        send_payload(laptop->usb_dev, &report);
 
-        // Set power mode custom
-        buffer[5] = 0x04;
-        buffer[6] = 0x0d;
-        buffer[7] = 0x02;
-        buffer[8] = 0x00;
-        buffer[9] = 0x01;
-        buffer[10] = laptop->power_mode;
-        buffer[11] = 0x00;
-        send_payload(laptop->usb_dev, buffer, 3400, 3800);
-
-        // Clear cpu boost
-        buffer[5] = 0x03;
-        buffer[6] = 0x0d;
-        buffer[7] = 0x87;
-        buffer[8] = 0x00;
-        buffer[9] = 0x01;
-        buffer[10] = 0x00;
-        buffer[11] = 0x00;
-        send_payload(laptop->usb_dev, buffer, 3400, 3800);
+        // Read cpu boost
+        report = get_razer_report(0x0d, 0x87, 0x03);
+        report.args[0] = 0x00;
+        report.args[1] = 0x01;
+        report.args[2] = 0x00;
+        send_payload(laptop->usb_dev, &report);
 
         // Set cpu boost
-        buffer[5] = 0x03;
-        buffer[6] = 0x0d;
-        buffer[7] = 0x07;
-        buffer[8] = 0x00;
-        buffer[9] = 0x01;
-        buffer[10] = laptop->cpu_boost;
-        buffer[11] = 0x00;
-        send_payload(laptop->usb_dev, buffer, 3400, 3800);
+        report = get_razer_report(0x0d, 0x07, 0x03);
+        report.args[0] = 0x00;
+        report.args[1] = 0x01;
+        report.args[2] = laptop->cpu_boost;
+        send_payload(laptop->usb_dev, &report);
 
-        // Clear gpu boost
-        buffer[5] = 0x03;
-        buffer[6] = 0x0d;
-        buffer[7] = 0x87;
-        buffer[8] = 0x00;
-        buffer[9] = 0x02;
-        buffer[10] = 0x00;
-        buffer[11] = 0x00;
-        send_payload(laptop->usb_dev, buffer, 3400, 3800);
+        report = get_razer_report(0x0d, 0x87, 0x03);
+        // Read gpu boost
+        report.args[0] = 0x00;
+        report.args[1] = 0x02;
+        report.args[2] = 0x00;
+        send_payload(laptop->usb_dev, &report);
 
+        report = get_razer_report(0x0d, 0x07, 0x03);
         // Set gpu boost
-        buffer[5] = 0x03;
-        buffer[6] = 0x0d;
-        buffer[7] = 0x07;
-        buffer[8] = 0x00;
-        buffer[9] = 0x02;
-        buffer[10] = laptop->gpu_boost;
-        buffer[11] = 0x00;
-        send_payload(laptop->usb_dev, buffer, 3400, 3800);
+        report.args[0] = 0x00;
+        report.args[1] = 0x02;
+        report.args[2] = laptop->gpu_boost;
+        send_payload(laptop->usb_dev, &report);
 
-        // End transaction
-        buffer[5] = 0x04;
-        buffer[6] = 0x0d;
-        buffer[7] = 0x82;
-        buffer[8] = 0x00;
-        buffer[9] = 0x02;
-        buffer[10] = 0x00;
-        buffer[11] = 0x00;
-        send_payload(laptop->usb_dev, buffer, 3400, 3800);
+        report = get_razer_report(0x0d, 0x82, 0x04);
+        // read
+        report.args[0] = 0x00;
+        report.args[1] = 0x02;
+        report.args[2] = 0x00;
+        report.args[3] = 0x00;
+        send_payload(laptop->usb_dev, &report);
 
-        // End set power mode
-        buffer[5] = 0x04;
-        buffer[6] = 0x0d;
-        buffer[7] = 0x82;
-        buffer[8] = 0x00;
-        buffer[9] = 0x02;
-        buffer[10] = laptop->power_mode;
-        buffer[11] = 0x00;
-        send_payload(laptop->usb_dev, buffer, 3400, 3800);
+        report = get_razer_report(0x0d, 0x82, 0x04);
+        // read
+        report.args[0] = 0x00;
+        report.args[1] = 0x02;
+        report.args[2] = laptop->power_mode;
+        report.args[3] = 0x00;
+        send_payload(laptop->usb_dev, &report);
     }
     mutex_unlock(&laptop->lock);
 

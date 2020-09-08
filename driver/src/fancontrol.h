@@ -21,22 +21,4 @@
 
 #define FAN_RPM_ID  0x01 // ID to control fan RPM
 
-/**
- * Clamps input manual fan RPM to what is allowed by the laptop
- */
-u8 clamp_fan_rpm(unsigned int rpm, __u32 product_id);
-
-
-/**
- * Some laptops are allowed an additional mode called 'creator'
- * which raises just GPU power
- */
-int creator_mode_allowed(__u32 product_id);
-int boost_mode_allowed(__u32 product_id);
-
-void set_fan_rpm(unsigned long x, struct razer_laptop *laptop);
-
-int set_power_mode(unsigned long x, struct razer_laptop *laptop);
-int set_custom_power_mode(unsigned long cpu_boost, unsigned long gpu_boost, struct razer_laptop *laptop);
-
 #endif
