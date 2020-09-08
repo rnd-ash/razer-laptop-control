@@ -20,7 +20,7 @@ fn print_help(reason: &str) -> ! {
     println!("              2 = Creator");
     println!("              4 = Custom ->");
     println!("                          0..3 = cpu boost");
-    println!("                          0..1 = gpu boost");
+    println!("                          0..2 = gpu boost");
     println!("");
     println!("- effect:");
     println!("  -> 'static' - PARAMS: <Red> <Green> <Blue>");

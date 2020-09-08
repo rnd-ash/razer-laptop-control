@@ -31,3 +31,5 @@
 #define BLADE_2016_PRO 0x0210
 
 #define BLADE_QHD 0x020F
+
+#define RAZER_USB_REPORT_LEN 0x5A
