@@ -317,9 +317,19 @@ impl Effect for Random {
     fn new(args: Vec<u8>) -> Box<dyn Effect> {
         let mut rng = rand::thread_rng();
         let mut k = board::KeyboardData::new();
-        for y in 0..15 {
-             for x in 0..6 {
-                 k.set_key_colour(x, y, rng.gen(), rng.gen(), rng.gen())
+        let mut c = 0;
+        for x in 0..6 {
+            for y in 0..15 {
+                 match c {
+                     0 =>  k.set_key_colour(x, y, 255, 0, 0),
+                     1 =>  k.set_key_colour(x, y, 0, 255, 0),
+                     2 =>  k.set_key_colour(x, y, 0, 0, 255),
+                     _ => {}
+                 };
+                 c += 1;
+                 if c == 3 {
+                     c = 0;
+                 }
              }
         }
         Box::new(Random {
