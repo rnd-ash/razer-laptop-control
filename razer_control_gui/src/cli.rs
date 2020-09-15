@@ -27,6 +27,7 @@ fn print_help(reason: &str) -> ! {
     println!("  -> 'static_gradient' - PARAMS: <Red1> <Green1> <Blue1> <Red2> <Green2> <Blue2>");
     println!("  -> 'wave_gradient' - PARAMS: <Red1> <Green1> <Blue1> <Red2> <Green2> <Blue2>");
     println!("  -> 'breathing_single' - PARAMS: <Red> <Green> <Blue> <Duration_ms/100>");
+    println!("  -> 'random' - NO PARMAS - TEST FUNCTION");
     std::process::exit(ret_code);
 }
 
@@ -89,6 +90,9 @@ fn write_effect(opt: Vec<String>) {
     }
     println!("Params: {:?}", params);
     match name.to_ascii_lowercase().as_str() {
+        "random" => {
+            send_effect(name.to_ascii_lowercase(), params)
+        }
         "static" => {
             if params.len() != 3 { print_help("Static effect requires 3 args") }
             send_effect(name.to_ascii_lowercase(), params)

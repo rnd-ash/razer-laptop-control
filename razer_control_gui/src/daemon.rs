@@ -172,6 +172,7 @@ pub fn process_client_request(cmd: comms::DaemonCommand) -> Option<comms::Daemon
             if let Ok(mut k) = EFFECT_MANAGER.lock() {
                 res = true;
                 let effect = match name.as_str() {
+                    "random" => Some(kbd::effects::Random::new(vec![0 as u8; 1])),
                     "static" => Some(kbd::effects::Static::new(params)),
                     "static_gradient" => Some(kbd::effects::StaticGradient::new(params)),
                     "wave_gradient" => Some(kbd::effects::WaveGradient::new(params)),

@@ -1,4 +1,5 @@
 use super::*;
+use rand::Rng;
 
 ///
 /// STATIC KEYBOARD EFFECT
@@ -297,6 +298,59 @@ impl Effect for BreathSingle {
         EffectSave {
             args: self.args.to_vec(),
             name: String::from("Breathing Single"),
+        }
+    }
+
+    fn get_state(&mut self) -> Vec<u8> {
+        self.kbd.get_curr_state()
+    }
+}
+
+
+#[derive(Copy, Clone)]
+pub struct Random {
+    args: [u8; 1],
+    kbd: board::KeyboardData
+}
+
+impl Effect for Random {
+    fn new(args: Vec<u8>) -> Box<dyn Effect> {
+        let mut rng = rand::thread_rng();
+        let mut k = board::KeyboardData::new();
+        for y in 0..15 {
+             for x in 0..6 {
+                 k.set_key_colour(x, y, rng.gen(), rng.gen(), rng.gen())
+             }
+        }
+        Box::new(Random {
+            args: [args[0]],
+            kbd: k
+        })
+    }
+
+    fn update(&mut self) -> board::KeyboardData {
+        return self.kbd;
+    }
+
+    fn get_name() -> &'static str
+    where
+        Self: Sized,
+    {
+        "Random"
+    }
+
+    fn get_varargs(&mut self) -> &[u8] {
+        return &self.args;
+    }
+
+    fn clone_box(&self) -> Box<dyn Effect> {
+        return Box::new(self.clone());
+    }
+
+    fn save(&mut self) -> EffectSave {
+        EffectSave {
+            args: self.args.to_vec(),
+            name: String::from("Random"),
         }
     }
 
