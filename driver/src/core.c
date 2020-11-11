@@ -163,7 +163,8 @@ struct razer_packet send_payload(struct usb_device *usb_dev, struct razer_packet
         if(response_report.remaining_packets != request_report->remaining_packets ||
            response_report.command_class != request_report->command_class ||
            response_report.command_id.id != request_report->command_id.id) {
-            print_erroneous_report(&response_report, "Razer laptop control", "Response doesn't match request");
+           // This can occur if we wire too many commands at once. Ignore 
+	   //print_erroneous_report(&response_report, "Razer laptop control", "Response doesn't match request");
 //		} else if (response_report.status == RAZER_CMD_BUSY) {
 //			print_erroneous_report(&response_report, "razerkbd", "Device is busy");
         } else if (response_report.status == RAZER_CMD_FAILURE) {
