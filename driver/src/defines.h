@@ -25,6 +25,7 @@
 #define BLADE_2020_STEALTH 0x252
 
 // Pro's laptops
+#define BLADE_2020_PRO_FHD 0x256
 #define BLADE_PRO_2019 0x234
 #define BLADE_2018_PRO_FHD 0x022F
 #define BLADE_2017_PRO 0x0225
