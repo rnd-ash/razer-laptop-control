@@ -11,15 +11,15 @@ A Kernel driver for Razer laptops with RGB keyboards
 ```
 cd driver
 sudo make driver_dkms
-sudo dkms add -m razercontrol -v 1.1.0
-sudo dkms build -m razercontrol -v 1.1.0
-sudo dkms install -m razercontrol -v 1.1.0
+sudo dkms add -m razercontrol -v 1.3.0
+sudo dkms build -m razercontrol -v 1.3.0
+sudo dkms install -m razercontrol -v 1.3.0
 ```
 After this, you MUST Rebuild your initramfs and reboot. The module will now be persistent
 
 ### DKMS REMOVE INSTRUCTIONS
 ```
-sudo dkms remove razercontrol --all
+sudo dkms remove razercontrol -v 1.3.0 --all
 ```
 
 ## Usage
