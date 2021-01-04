@@ -42,6 +42,10 @@ Experimental code for system daemon and UI/CLI interface for controlling both RG
 
 ## Changelog
 
+### 1.3.0 - 04/01/2021
+* Add support for Razer book 2020
+* Add support for Razer blade pro 2020 FHD
+
 ### 1.2.1 - 17/07/2020
 * Added initial rust based Daemon - see razer_control_gui for more details
 * Removed useless printk calls in kernel module - DMESG output should not longer be cluttered
