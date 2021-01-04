@@ -24,6 +24,9 @@
 #define BLADE_2019_STEALTH_GTX 0x024a
 #define BLADE_2020_STEALTH 0x252
 
+// Book's
+#define BOOK_2020 0x026a
+
 // Pro's laptops
 #define BLADE_PRO_2019 0x234
 #define BLADE_2018_PRO_FHD 0x022F
