@@ -22,6 +22,8 @@ static int get_max_fan_rpm(__u32 product_id)
 	case BLADE_PRO_2019:
 	case BLADE_2019_STEALTH:
 		return MAX_FAN_RPM_STEALTH;
+	case BOOK_2020:
+		return MAX_FAN_RPM_STEALTH;
 	default:
 		return MAX_FAN_RPM_DEFAULT;
 	}
