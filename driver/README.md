@@ -2,25 +2,32 @@
 
 A Kernel driver for Razer laptops with RGB keyboards
 
-## How to use
+## Installation
+
 1. Install your linux headers
 
-**If you have openrazer installed, you must remove it from your system.**
+2. **If you have openrazer installed, you must remove it from your system:**
+~~~bash
+sudo apt remove openrazer-driver-dkms
+~~~
 
-### DKMS INSTALL INSTRUCTIONS
-```
+3. DKMS INSTALL INSTRUCTIONS
+
+~~~bash
 cd driver
 sudo make driver_dkms
 sudo dkms add -m razercontrol -v 1.3.0
 sudo dkms build -m razercontrol -v 1.3.0
 sudo dkms install -m razercontrol -v 1.3.0
-```
-After this, you MUST Rebuild your initramfs and reboot. The module will now be persistent
+~~~
+4. After this, you MUST Rebuild your initramfs and reboot:
 
-### DKMS REMOVE INSTRUCTIONS
-```
-sudo dkms remove razercontrol -v 1.3.0 --all
-```
+~~~bash
+sudo update-initramfs -u
+sudo reboot
+~~~
+
+The module will now be persistent.
 
 ## Usage
 **UPDATE: See the rgb_test_service folder for a easier way to use the system**
@@ -86,3 +93,8 @@ Creator (2)
 ```
 
 NOTE: Turning on gaming mode can automatically make the fan increase in speed as the EC seems to switch to a more aggressive fan curve if still in automatic mode.
+
+### DKMS REMOVE INSTRUCTIONS
+```
+sudo dkms remove razercontrol -v 1.3.0 --all
+```
