@@ -25,6 +25,8 @@ char *getDeviceDescription(int product_id)
 	        return "Blade 2019 15\" Mercury edition";
 	    case BLADE_2020_BASE:
 	        return "Blade 2020 15\" base";
+        case BLADE_2021_BASE:
+            return "Blade 2021 15\" base";
 	    case BLADE_2020_ADV:
 	        return "Blade 2020 15\" advanced";
 
@@ -39,7 +41,7 @@ char *getDeviceDescription(int product_id)
 	        return "Blade 2019 stealth (With GTX)";
 	    case BLADE_2020_STEALTH:
 		return "Blade 2020 stealth";
-	
+
 	// Book's
 	    case BOOK_2020:
 		return "Book 2020";
@@ -169,7 +171,7 @@ struct razer_packet send_payload(struct usb_device *usb_dev, struct razer_packet
         if(response_report.remaining_packets != request_report->remaining_packets ||
            response_report.command_class != request_report->command_class ||
            response_report.command_id.id != request_report->command_id.id) {
-           // This can occur if we wire too many commands at once. Ignore 
+           // This can occur if we wire too many commands at once. Ignore
 	   //print_erroneous_report(&response_report, "Razer laptop control", "Response doesn't match request");
 //		} else if (response_report.status == RAZER_CMD_BUSY) {
 //			print_erroneous_report(&response_report, "razerkbd", "Device is busy");
