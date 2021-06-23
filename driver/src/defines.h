@@ -5,6 +5,8 @@
 
 // -- Product ID's //
 
+// 14" laptops
+#define BLADE_14_2021 0x0270
 // 15" laptops
 #define BLADE_2016_END 0x0224
 #define BLADE_2018_ADV 0x0233
@@ -15,7 +17,6 @@
 #define BLADE_2019_MERC 0x0245
 #define BLADE_2020_BASE 0x0255
 #define BLADE_2020_ADV 0x0253
-
 
 // Stealth`s
 #define BLADE_2017_STEALTH_MID 0x022D

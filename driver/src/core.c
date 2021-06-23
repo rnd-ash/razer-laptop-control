@@ -8,6 +8,9 @@
 char *getDeviceDescription(int product_id)
 {
 	switch (product_id) {
+            // 14" laptops
+            case BLADE_14_2021:
+                return "Blade 14\" 2021";
 	    // 15" laptops
 	    case BLADE_2016_END:
 	        return "Blade 15\" 2016";
