@@ -15,6 +15,7 @@
 #define BLADE_2019_MERC 0x0245
 #define BLADE_2020_BASE 0x0255
 #define BLADE_2020_ADV 0x0253
+#define BLADE_LATE_2020_BASE 0x0268
 
 
 // Stealth`s
