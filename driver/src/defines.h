@@ -29,6 +29,7 @@
 #define BOOK_2020 0x026a
 
 // Pro's laptops
+#define BLADE_2021_PRO_FHD 0x026E
 #define BLADE_2020_PRO_FHD 0x256
 #define BLADE_PRO_2019 0x234
 #define BLADE_2018_PRO_FHD 0x022F
