@@ -256,6 +256,8 @@ static void razer_laptop_remove(struct hid_device *hdev) {
 
 // Support list for module
 static const struct hid_device_id table[] = {
+        // 14"
+        { HID_USB_DEVICE(RAZER_VENDOR_ID, BLADE_14_2021)},
 	// 15"
 	{ HID_USB_DEVICE(RAZER_VENDOR_ID, BLADE_2016_END)},
 	{ HID_USB_DEVICE(RAZER_VENDOR_ID, BLADE_2018_ADV)},

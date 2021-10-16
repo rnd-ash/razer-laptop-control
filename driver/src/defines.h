@@ -5,6 +5,8 @@
 
 // -- Product ID's //
 
+// 14" laptops
+#define BLADE_14_2021 0x0270
 // 15" laptops
 #define BLADE_2016_END 0x0224
 #define BLADE_2018_ADV 0x0233
