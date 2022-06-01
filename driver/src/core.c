@@ -187,8 +187,6 @@ struct razer_packet send_payload(struct usb_device *usb_dev, struct razer_packet
 //			print_erroneous_report(&response_report, "razerkbd", "Device is busy");
         } else if (response_report.status == RAZER_CMD_FAILURE) {
             print_erroneous_report(&response_report, "Razer laptop control", "Command failed");
-        } else if (response_report.status == RAZER_CMD_NOT_SUPPORTED) {
-            print_erroneous_report(&response_report, "Razer laptop control", "Command not supported");
         } else if (response_report.status == RAZER_CMD_TIMEOUT) {
             print_erroneous_report(&response_report, "Razer laptop control", "Command timed out");
         }
