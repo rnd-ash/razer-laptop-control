@@ -1,6 +1,11 @@
 # Razer laptop control project
 A standalone driver + application designed for Razer notebooks
 
+## NOTICE ##
+This repo is now archived as I have moved over to System76 after my trusty blade 15 died!
+
+The work continues however, do check [phush0's](https://github.com/phush0/razer-laptop-control-no-dkms) repository where he is adding more features and continuing support!
+
 ## Join the unofficial Razer linux Channel
 I can be contacted on this discord server under the 'laptop-control' channel
 [Discord link](https://discord.gg/GdHKf45)
