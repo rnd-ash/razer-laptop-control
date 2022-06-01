@@ -38,6 +38,8 @@ char *getDeviceDescription(int product_id)
 	        return "Blade (late) 2020 15\" base";
 	    case BLADE_2021_MID_ADV:
 	        return "Blade 2021 (Mid) 15\" advanced";
+		case BLADE_2022_EARLY:
+			return "Blade 2022 (Early) 15\"";
         // Stealth's
 	    case BLADE_2017_STEALTH_MID:
 	        return "Blade 2017 stealth";
